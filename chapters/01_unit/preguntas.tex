@@ -1,0 +1,74 @@
+\section{Revisión de contenidos}
+
+\begin{enumerate}
+  \item ¿Cuáles son los cuatro componentes principales de un computador y cuál es la función de cada uno?
+  \item ¿Qué diferencia existe entre los registros visibles para el usuario y los registros de control y estado?
+  \item ¿Qué función cumplen el Program Counter (PC), el Instruction Register (IR) y la Program Status Word (PSW) durante la ejecución de un programa?
+  \item ¿En qué consiste el ciclo de instrucción y cuáles son sus etapas principales?
+  \item ¿Qué tipos de acciones puede especificar una instrucción de máquina?
+  \item ¿Qué es una interrupción y por qué mejora el aprovechamiento del procesador?
+  \item ¿Cuáles son las cuatro clases principales de interrupciones? Mencione un ejemplo de cada una.
+  \item Describa brevemente cómo se procesa una interrupción desde que ocurre hasta que el programa reanuda su ejecución.
+  \item ¿Qué estrategias existen para gestionar múltiples interrupciones y cuáles son sus ventajas y desventajas?
+  \item ¿Por qué los computadores utilizan una jerarquía de memoria en lugar de un único tipo de memoria?
+  \item ¿Cómo está organizada una jerarquía de memoria típica, desde el nivel más rápido hasta el más lento?
+  \item ¿Qué función cumple la memoria caché dentro de la jerarquía de memoria?
+  \item Compare las técnicas de E/S programada, E/S mediante interrupciones y acceso directo a memoria (DMA).
+  \item ¿Por qué DMA resulta más eficiente que las otras técnicas de entrada/salida para transferencias de grandes bloques de datos?
+\end{enumerate}
+
+\subsection*{Respuestas}
+
+\paragraph{Respuesta 1} Procesador (ejecuta instrucciones), memoria principal (almacena programas y datos), módulos de entrada/salida (comunican el computador con el exterior) e interconexión del sistema (buses que permiten la comunicación entre los componentes).
+
+\paragraph{Respuesta 2} Los registros visibles para el usuario almacenan datos y direcciones utilizados por los programas. Los registros de control y estado contienen información necesaria para coordinar la ejecución del procesador y el sistema operativo.
+
+\paragraph{Respuesta 3}
+\begin{itemize}
+  \item PC: dirección de la siguiente instrucción.
+  \item IR: instrucción actualmente ejecutada.
+  \item PSW: estado del procesador (flags, modo de ejecución, interrupciones, etc.).
+\end{itemize}
+
+\paragraph{Respuesta 4} El ciclo de instrucción consta de la captación (fetch) de la instrucción, su ejecución (execute) y la comprobación de interrupciones antes de continuar con la siguiente instrucción.
+
+\paragraph{Respuesta 5}
+\begin{itemize}
+  \item Transferencia procesador-memoria.
+  \item Transferencia procesador-E/S.
+  \item Procesamiento de datos.
+  \item Control del flujo del programa.
+\end{itemize}
+
+\paragraph{Respuesta 6} Una interrupción es un evento que obliga al procesador a suspender temporalmente el programa en ejecución para atender otro evento. Permite que el procesador continúe trabajando mientras los dispositivos de E/S realizan operaciones lentas.
+
+\paragraph{Respuesta 7}
+\begin{itemize}
+  \item Programa.
+  \item Temporizador.
+  \item Entrada/Salida (I/O).
+  \item Fallo de hardware.
+\end{itemize}
+
+\paragraph{Respuesta 8} El procesador termina la instrucción actual, guarda el contexto del programa, ejecuta la rutina de servicio (ISR), restaura el contexto y continúa la ejecución desde el punto donde fue interrumpido.
+
+\paragraph{Respuesta 9}
+\begin{itemize}
+  \item Deshabilitar interrupciones mientras se ejecuta una ISR (simple pero sin prioridades).
+  \item Asignar prioridades, permitiendo interrupciones anidadas (nested interrupts), donde una ISR de mayor prioridad puede interrumpir otra de menor prioridad.
+\end{itemize}
+
+\paragraph{Respuesta 10} Porque no existe una memoria que sea simultáneamente muy rápida, de gran capacidad y de bajo costo. La jerarquía busca equilibrar estas tres características.
+
+\paragraph{Respuesta 11} Registros \(\to\) Caché \(\to\) Memoria principal \(\to\) Almacenamiento secundario (SSD/HDD).
+
+\paragraph{Respuesta 12} Almacena temporalmente los datos e instrucciones de acceso más frecuente para reducir el tiempo medio de acceso a memoria.
+
+\paragraph{Respuesta 13}
+\begin{itemize}
+  \item E/S programada: el procesador espera activamente al dispositivo.
+  \item E/S por interrupciones: el procesador realiza otras tareas y el dispositivo lo interrumpe cuando necesita atención.
+  \item DMA: un controlador especializado transfiere directamente los datos entre la memoria y el dispositivo, interviniendo el procesador solo al inicio y al final.
+\end{itemize}
+
+\paragraph{Respuesta 14} Porque el procesador no participa en cada transferencia de datos; únicamente configura el controlador DMA y recibe una interrupción cuando la transferencia ha finalizado, reduciendo significativamente la carga del procesador.
