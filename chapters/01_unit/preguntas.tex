@@ -1,5 +1,9 @@
 \section{Revisión de contenidos}
 
+A continuación, se presentan una serie de preguntas diseñadas para evaluar la comprensión de los conceptos fundamentales presentados en el texto.
+
+\subsection{Preguntas sobre sistemas de cómputos}
+
 \begin{enumerate}
   \item ¿Cuáles son los cuatro componentes principales de un computador y cuál es la función de cada uno?
   \item ¿Qué diferencia existe entre los registros visibles para el usuario y los registros de control y estado?
@@ -19,7 +23,7 @@
 
 \subsection*{Respuestas}
 
-\paragraph{Respuesta 1} Procesador (ejecuta instrucciones), memoria principal (almacena programas y datos), módulos de entrada/salida (comunican el computador con el exterior) e interconexión del sistema (buses que permiten la comunicación entre los componentes).
+\paragraph{Respuesta 1} Procesador (ejecuta instrucciones), memoria principal (almacena programas y datos), módulos de entrada/salida (permiten la comunicación del computador con el exterior) e interconexión del sistema (buses que permiten la comunicación entre los componentes).
 
 \paragraph{Respuesta 2} Los registros visibles para el usuario almacenan datos y direcciones utilizados por los programas. Los registros de control y estado contienen información necesaria para coordinar la ejecución del procesador y el sistema operativo.
 
@@ -72,3 +76,36 @@
 \end{itemize}
 
 \paragraph{Respuesta 14} Porque el procesador no participa en cada transferencia de datos; únicamente configura el controlador DMA y recibe una interrupción cuando la transferencia ha finalizado, reduciendo significativamente la carga del procesador.
+
+\subsection{Preguntas sobre generalidades de los SO}
+
+\begin{enumerate}
+\item El diseño de los sistemas operativos modernos se fundamenta en cuatro grandes avances conceptuales que permiten administrar el hardware de forma segura y eficiente. ¿Cuáles son estos cuatro pilares?
+\item ¿Qué problemas específicos derivados de la ejecución de múltiples programas concurrentes (en sistemas multiprogramados o de tiempo compartido) resuelve la abstracción del concepto de ``proceso''?
+\item Explique brevemente la relación entre la Memoria Virtual y la Unidad de Gestión de Memoria (MMU) en el proceso de ejecución de un programa.
+\item Enumere y defina los cuatro objetivos principales de la seguridad en un sistema operativo.
+\item Al diseñar una política de planificación, el sistema operativo debe buscar un equilibrio entre tres objetivos fundamentales. ¿En qué consiste cada uno de ellos?
+\end{enumerate}
+
+\subsubsection{Respuestas}
+
+\paragraph{Respuesta 1} Los cuatro pilares son: Procesos, Gestión de memoria, Protección y seguridad de la información, y Planificación y administración de recursos.
+
+\paragraph{Respuesta 2} El concepto de proceso permite gestionar sistemáticamente problemas como la sincronización incorrecta, la violación de exclusión mutua, los comportamientos no deterministas y los interbloqueos (\emph{deadlocks}).
+
+\paragraph{Respuesta 3} La memoria virtual proporciona un espacio de direcciones lógico independiente de la memoria física. La MMU es el hardware encargado de traducir dinámicamente esas direcciones virtuales generadas por el programa en direcciones físicas reales durante la ejecución.
+
+\paragraph{Respuesta 4}
+\begin{itemize}
+  \item \textbf{Disponibilidad:} Garantizar que los recursos estén accesibles para usuarios autorizados.
+  \item \textbf{Confidencialidad:} Impedir el acceso no autorizado a la información.
+  \item \textbf{Integridad:} Proteger los datos contra modificaciones no autorizadas o accidentales.
+  \item \textbf{Autenticidad:} Verificar la identidad de los usuarios y la validez de los datos.
+\end{itemize}
+
+\paragraph{Respuesta 5}
+\begin{itemize}
+  \item \textbf{Equidad:} Acceso justo a los recursos para procesos con necesidades similares.
+  \item \textbf{Respuesta diferenciada:} Asignación basada en prioridades o requisitos específicos.
+  \item \textbf{Eficiencia:} Maximizar el rendimiento y minimizar los tiempos de respuesta.
+\end{itemize}

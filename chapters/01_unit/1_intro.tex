@@ -1,0 +1,122 @@
+\section{Elementos básicos de un computador}
+
+De forma general, una computadora consiste de un procesador, memoria principal y dispositivos de E/S. Estos componentes se comunican entre sí mediante el bus de sistema, como se muestra en la figura \ref{fig:arch_components}.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.6\textwidth]{chapters/01_unit/media/arch.pdf}
+  \caption{Componentes de un computador.}
+  \label{fig:arch_components}
+\end{figure}
+
+Los registros son unidades de almacenamiento temporal de alta velocidad ubicadas dentro de la CPU. Su función elemental es retener datos, instrucciones y direcciones de memoria de manera transitoria para permitir que el procesador ejecute sus ciclos de instrucción. Existe un conjunto especializado de registros encargados de gestionar la interfaz de comunicación entre la CPU, la memoria principal y los módulos E/S: el MAR, el MBR, el I/OAR y el I/OBR.
+
+Por un lado, el Registro de Dirección de Memoria o MAR (Memory Address Register) es el encargado de almacenar la dirección lógica o física exacta de la celda de memoria a la que la CPU necesita acceder. Este registro se conecta directamente al bus de direcciones, enviando la señal de ubicación al módulo de RAM. Por otro lado, el Registro Intermediario de Memoria o MBR (Memory Buffer Register, también conocido como Registro de Datos de Memoria o MDR) funciona como un contenedor temporal para los datos o instrucciones que transitan hacia o desde dicha dirección. Cuando se realiza una lectura, el dato proveniente de la memoria se deposita en el MBR antes de ser procesado por la CPU; en una escritura, la CPU coloca el dato en el MBR y la dirección en el MAR, tras lo cual el contenido se vierte al bus de datos hacia la memoria.
+
+De manera análoga a la gestión de memoria, la CPU requiere un mecanismo estructurado para comunicarse con los dispositivos E/S y sus respectivos controladores. Para este propósito se implementan el Registro de Dirección de Entrada/Salida o I/OAR (Input/Output Address Register) y el Registro Intermediario de Entrada/Salida o I/OBR (Input/Output Buffer Register). El I/OAR tiene como función especificar la identificación o la dirección del puerto del dispositivo periférico con el cual se desea establecer contacto, ya sea un disco duro, un teclado o una interfaz de red. Una vez determinado el destino u origen, el I/OBR actúa como un búfer o memoria intermedia de datos, reteniendo temporalmente la información que se intercambia entre la CPU y el módulo de entrada/salida para compensar la discrepancia de velocidades entre el procesador y los periféricos externos.
+
+\subsection{Registros de usuario}
+
+Dentro de la arquitectura del procesador, los registros visibles para el usuario constituyen el almacenamiento temporal accesible directamente mediante el lenguaje ensamblador ejecutado por la CPU. Su función principal es servir tanto a los programas de sistema como a las aplicaciones de usuario. Siempre se busca reducir el número de accesos a la memoria principal porque esta es más lenta que los registros. Tradicionalmente, se clasifican en tres grandes grupos: registros de datos, registros de direcciones y registros de códigos de condición.
+
+Por un lado, los registros de datos son utilizados por el programador para diversas operaciones. Por otro lado, los registros de direcciones almacenan ubicaciones de memoria o la información necesaria para calcular direcciones efectivas, pudiendo igualmente ser de propósito general o estar asociados a un modo de direccionamiento específico.
+
+Entre las especializaciones más comunes de los registros de direcciones destacan tres tipos. El registro de índice (Index register) interviene en el direccionamiento indexado, sumando su contenido a una dirección base para obtener la dirección efectiva\footnote{El direccionamiento efectivo básicamente realiza la siguiente operación: \(\text{Dir. efectiva}=\text{Base}+\text{Índice}\).}. El puntero de segmento (Segment pointer) es un valor usado para apuntar a una zona de memoria (un segment), que luego se combina con un offset para formar una dirección física. Finalmente, el puntero de pila (Stack pointer) señala la cima de la pila en memoria, permitiendo ejecutar instrucciones de apilado (push) y desapilado (pop) sin especificar una dirección explícita.
+
+\subsection{Registros de Control}
+
+Además de los registros visibles para el usuario, el procesador dispone de registros de control y estado, destinados a coordinar la ejecución de instrucciones. En la mayoría de las arquitecturas estos registros no son accesibles por los programas de usuario, aunque algunos pueden utilizarse mediante instrucciones privilegiadas ejecutadas en modo supervisor o del sistema operativo.
+
+Entre los registros de control más importantes se encuentran el contador de programa (Program Counter, PC), que almacena la dirección de la siguiente instrucción a ejecutar, y el registro de instrucción (Instruction Register, IR), que contiene la instrucción más recientemente captada desde memoria.
+
+Asimismo, los procesadores incorporan un registro de estado, conocido habitualmente como palabra de estado del programa (Program Status Word, PSW), que reúne información sobre el estado de ejecución del procesador. Este registro incluye los códigos de condición (flags), establecidos automáticamente por el hardware como resultado de operaciones aritméticas o lógicas, así como otros indicadores, como la habilitación de interrupciones y el modo de ejecución (usuario o supervisor). Los códigos de condición permiten que instrucciones posteriores, como los saltos condicionales, tomen decisiones en función del resultado de operaciones previas. Generalmente, estos bits pueden consultarse de forma implícita, pero no modificarse directamente mediante instrucciones de máquina.
+
+Además de estos registros, muchas arquitecturas incorporan registros especializados para funciones concretas, como tablas de vectores de interrupción, punteros de pila del sistema, gestión de memoria y control de dispositivos de entrada/salida. La organización de los registros de control y estado depende de las necesidades del sistema operativo y de las decisiones de diseño del procesador. En particular, se busca proporcionar soporte hardware para mecanismos como la protección de memoria y la conmutación entre procesos, al tiempo que se determina qué información de control conviene almacenar en registros ---más rápidos, pero costosos--- y cuál en memoria principal, que ofrece mayor capacidad a costa de un mayor tiempo de acceso.
+
+\section{Ejecución de instrucciones}
+
+La ejecución de un programa se lleva a cabo mediante una secuencia repetitiva denominada ciclo de instrucción, compuesto por dos etapas: busqueda (fetch) y ejecución (execute). Este ciclo continúa hasta que el procesador se apaga, ocurre un error irrecuperable o se ejecuta una instrucción de detención.
+
+Durante la etapa de captación, el contador de programa (Program Counter, PC) contiene la dirección de la siguiente instrucción que debe leerse de memoria. Tras la captación, el procesador incrementa automáticamente el PC para apuntar a la instrucción siguiente, salvo que la instrucción ejecutada modifique explícitamente el flujo del programa. La instrucción obtenida se almacena en el registro de instrucción (Instruction Register, IR), donde es decodificada para determinar la operación que debe realizar el procesador.
+
+Las acciones derivadas de una instrucción pueden clasificarse en cuatro categorías principales: 
+\begin{itemize}
+  \item Procesador-memoria: Datos transferidos entre procesador y memoria.
+  \item Procesador-E/S: lo mismo que procesador memoria pero con dispositivos E/S.
+  \item Procesamiento de datos: operaciones aritméticas y lógicas sobre los datos.
+  \item Control: saltos de secuencia o alteraciones del flujo secuencial, por ejemplo: estructuras de decisión, bucles.
+\end{itemize}
+
+\section{Interrupciones}
+
+Las interrupciones son un mecanismo mediante el cual el procesador puede suspender temporalmente la ejecución del programa en curso para atender un evento que requiere atención inmediata. Gracias a este mecanismo, el procesador no necesita permanecer inactivo mientras espera la finalización de operaciones lentas, como las de entrada/salida, pudiendo continuar ejecutando otras instrucciones hasta que el dispositivo solicite atención.
+
+Cuando se produce una interrupción, el procesador finaliza la instrucción en ejecución, guarda el contexto del programa (como el contador de programa y otros registros relevantes), transfiere el control a una rutina de servicio de interrupción (Interrupt Handler), generalmente perteneciente al sistema operativo, y, una vez atendido el evento, restaura el contexto para reanudar la ejecución exactamente donde había sido interrumpida. Para ello, el ciclo de instrucción incorpora una etapa adicional en la que el procesador comprueba si existe alguna interrupción pendiente antes de iniciar la captación de la siguiente instrucción (Figura \ref{fig:instr_interrupciones}).
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.7\textwidth]{chapters/01_unit/media/ejecucion_instr.pdf}
+  \caption{Ejecución de instrucciones con interrupciones.}
+  \label{fig:instr_interrupciones}
+\end{figure}
+
+Las interrupciones pueden clasificarse en cuatro categorías principales:
+\begin{itemize}
+  \item \textbf{Interrupciones de programa}: originadas por la ejecución de una instrucción, como desbordamientos aritméticos, divisiones por cero, instrucciones ilegales o accesos no autorizados a memoria.
+  \item \textbf{Interrupciones de temporizador}: generadas por el reloj del sistema para permitir funciones como la planificación de procesos.
+  \item \textbf{Interrupciones de entrada/salida (I/O)}: emitidas por los dispositivos periféricos cuando requieren atención o finalizan una operación.
+  \item \textbf{Fallos de hardware}: provocados por errores físicos o anomalías detectadas en los componentes del sistema.
+\end{itemize}
+
+Aunque la atención de una interrupción introduce una pequeña sobrecarga debido al cambio de contexto y a la ejecución de la rutina de servicio, este coste es muy inferior al tiempo que el procesador perdería esperando activamente la finalización de operaciones lentas, incrementando así la eficiencia global del sistema.
+
+\subsection{Procesamiento de interrupciones}
+
+La atención de una interrupción involucra tanto al hardware del procesador como al sistema operativo. Cuando un dispositivo o evento genera una solicitud de interrupción, el procesador finaliza la instrucción en ejecución y reconoce la petición. A continuación, guarda el contexto mínimo necesario para reanudar posteriormente el programa interrumpido, incluyendo el contador de programa (PC), la palabra de estado del programa (PSW) y, posteriormente, el resto de los registros de propósito general, normalmente sobre la pila del sistema.
+
+Una vez guardado el contexto, el procesador carga en el contador de programa la dirección de la rutina de servicio correspondiente (Interrupt Service Routine, ISR), cuya función es identificar la causa de la interrupción y ejecutar las acciones necesarias para atenderla. Finalizado este procesamiento, la rutina restaura el estado previamente almacenado y ejecuta una instrucción especial de retorno de interrupción, recuperando el PC y el PSW para que el programa continúe exactamente desde el punto donde fue interrumpido. En forma de síntesis los pasos serían los siguientes:
+\begin{enumerate}
+  \item llega la interrupción;
+  \item termina la instrucción actual;
+  \item guarda el contexto;
+  \item ejecuta la ISR;
+  \item restaura el contexto;
+  \item continúa el programa.
+\end{enumerate}
+
+La preservación completa del contexto resulta indispensable, ya que las interrupciones ocurren de forma asíncrona e impredecible. A diferencia de una llamada convencional a un procedimiento, pueden producirse en cualquier instante durante la ejecución de un programa, por lo que el sistema debe garantizar que, tras atender el evento, la ejecución se reanude sin alterar el estado del proceso interrumpido.
+
+\subsection{Tratamiento de múltiples interrupciones}
+
+En sistemas donde pueden producirse múltiples interrupciones de forma simultánea, el procesador debe establecer un mecanismo para determinar el orden en que serán atendidas. Existen dos estrategias fundamentales para resolver este problema.
+
+La primera consiste en deshabilitar temporalmente las interrupciones mientras se ejecuta una rutina de servicio (ISR). De este modo, cualquier nueva solicitud permanece pendiente hasta que la rutina finaliza y las interrupciones vuelven a habilitarse. Este enfoque simplifica el diseño, ya que las interrupciones se atienden estrictamente de forma secuencial, aunque puede resultar inadecuado para eventos que requieren una respuesta inmediata.
+
+La segunda estrategia consiste en asignar un nivel de prioridad a cada interrupción. En este caso, una interrupción de mayor prioridad puede interrumpir la ejecución de una rutina de servicio asociada a una interrupción de menor prioridad. El contexto de esta última se guarda en la pila del sistema y se restaura una vez finalizada la atención de la interrupción más prioritaria. Este mecanismo, conocido como \emph{interrupciones anidadas} (nested interrupts), permite responder con mayor rapidez a eventos críticos, evitando la pérdida de información en dispositivos sensibles al tiempo, como interfaces de comunicación.
+
+\section{Jerarquía de memoria}
+
+El diseño de la memoria de un computador debe equilibrar tres características fundamentales: capacidad, velocidad de acceso y costo. En la práctica, no existe una tecnología que ofrezca simultáneamente gran capacidad, alta velocidad y bajo costo. En general, las memorias más rápidas son también las más costosas y de menor capacidad, mientras que las de mayor capacidad presentan tiempos de acceso más elevados.
+
+\begin{figure}[ht]
+  \centering
+  \includegraphics[width=0.6\textwidth]{chapters/01_unit/media/memory_hierarchy.pdf}
+  \caption{La jerarquía de memoria.}
+  \label{fig:jerarquia_de_memoria}
+\end{figure}
+
+Para resolver este compromiso se emplea una \textbf{jerarquía de memoria} como se muestra en la figura \ref{fig:jerarquia_de_memoria}, formada por varios niveles organizados según su velocidad y capacidad. En los niveles superiores se encuentran memorias pequeñas, muy rápidas y de alto costo por bit, mientras que en los niveles inferiores predominan memorias de mayor capacidad, menor costo y mayor tiempo de acceso. A medida que se desciende en la jerarquía, aumenta la capacidad y disminuyen tanto el costo por bit como la frecuencia con la que el procesador accede directamente a dichos niveles.
+
+El funcionamiento eficiente de esta organización se basa en el \textbf{principio de localidad de referencia}, según el cual los programas tienden a reutilizar durante intervalos cortos un conjunto reducido de instrucciones y datos. Gracias a ello, los datos más utilizados pueden mantenerse temporalmente en los niveles superiores de la jerarquía, mientras que el resto permanece en memorias más lentas. De esta forma se consigue un tiempo medio de acceso cercano al de las memorias rápidas, sin renunciar a la gran capacidad proporcionada por las memorias de menor costo.
+
+Una jerarquía de memoria típica está compuesta, de mayor a menor velocidad, por los registros del procesador, la memoria caché, la memoria principal (RAM) y el almacenamiento secundario, como discos duros o unidades de estado sólido (SSD). Además, pueden incorporarse niveles adicionales mediante técnicas de almacenamiento temporal (\emph{buffer} o \emph{cache}) implementadas por software, con el objetivo de reducir aún más el número de accesos a los dispositivos más lentos.
+
+\section{Técnicas de comunicación E/S}
+
+Existen tres técnicas principales para realizar operaciones de entrada/salida (I/O): E/S programada (Programmed I/O), E/S mediante interrupciones (Interrupt-Driven I/O) y acceso directo a memoria (Direct Memory Access, DMA).
+
+En la E/S programada, el procesador inicia la operación y consulta continuamente el estado del dispositivo hasta que esta finaliza, permaneciendo ocupado durante toda la transferencia. En la E/S mediante interrupciones, el procesador puede continuar ejecutando otras tareas y es notificado mediante una interrupción cuando el dispositivo está listo para intercambiar datos. Sin embargo, en ambos métodos el procesador participa activamente en cada transferencia de datos entre la memoria y el dispositivo, lo que limita la velocidad de transferencia y consume tiempo de procesamiento.
+
+Para superar estas limitaciones se emplea el acceso directo a memoria (DMA). En este esquema, el procesador únicamente configura el controlador DMA indicando el tipo de operación (lectura o escritura), el dispositivo involucrado, la dirección inicial de memoria y la cantidad de datos a transferir. A continuación, el controlador DMA asume el control de la operación y transfiere directamente el bloque de datos entre la memoria principal y el dispositivo de entrada/salida, sin que estos deban atravesar el procesador. Una vez completada la transferencia, el controlador genera una interrupción para informar al procesador de su finalización.
+
+Durante la transferencia, el controlador DMA debe utilizar el bus del sistema para acceder a la memoria, por lo que el procesador puede verse obligado a esperar brevemente cuando ambos requieren el bus de forma simultánea. No obstante, esta pequeña contención resulta insignificante frente a la mejora de rendimiento obtenida, especialmente en transferencias de grandes bloques de datos, donde DMA es considerablemente más eficiente que la E/S programada y la E/S mediante interrupciones.

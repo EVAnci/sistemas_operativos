@@ -1,0 +1,78 @@
+\section{Generalidades de los Sistemas Operativos}
+
+\subsection{Objetivos y funcionalidades de los SO}
+
+Un sistema operativo (Operating System, OS) es el software encargado de controlar la ejecución de los programas y de actuar como intermediario entre las aplicaciones y el hardware del computador. Sus principales objetivos son facilitar el uso del sistema, administrar eficientemente los recursos disponibles y proporcionar una estructura que permita incorporar nuevas funcionalidades sin afectar el funcionamiento del sistema.
+
+Como interfaz entre el usuario y el hardware, el sistema operativo abstrae los detalles de la arquitectura del computador y ofrece servicios que simplifican el desarrollo y la ejecución de programas. Entre estos servicios se encuentran la ejecución de aplicaciones, la gestión de archivos, el acceso a dispositivos de entrada/salida, el control de usuarios, la detección de errores y la provisión de interfaces de programación (API) que permiten a las aplicaciones utilizar los recursos del sistema.
+
+Como administrador de recursos, el sistema operativo decide cómo se asignan y utilizan los principales componentes del computador, incluyendo el procesador, la memoria principal y secundaria, y los dispositivos de entrada/salida. Para ello, el núcleo (\emph{kernel}) permanece residente en memoria y recupera el control del procesador siempre que es necesario administrar estos recursos o atender eventos como interrupciones y llamadas al sistema.
+
+Finalmente, un sistema operativo debe diseñarse con una arquitectura modular que facilite su evolución. Esto permite adaptar el sistema a nuevo hardware, incorporar servicios adicionales y corregir errores sin comprometer la estabilidad ni el funcionamiento del resto de sus componentes.
+
+\subsection{Estructura de los SO}
+
+Los sistemas operativos constituyen uno de los desarrollos de software más complejos, debido a la necesidad de equilibrar objetivos como la comodidad de uso, la eficiencia y la capacidad de evolución. Su diseño moderno se fundamenta en cuatro grandes avances conceptuales:
+
+\begin{itemize}
+  \item Procesos.
+  \item Gestión de memoria.
+  \item Protección y seguridad de la información.
+  \item Planificación y administración de recursos.
+\end{itemize}
+
+Estos cuatro pilares reúnen los principales mecanismos que permiten al sistema operativo administrar el hardware y proporcionar un entorno seguro y eficiente para la ejecución de aplicaciones, constituyendo la base de los temas desarrollados en los capítulos siguientes.
+
+A continuación se proporciona una breve motivación de los cuatro conceptos.
+
+\subsubsection{El proceso}
+
+El concepto de \textit{proceso} constituye uno de los pilares fundamentales de los sistemas operativos modernos. En términos generales, un proceso puede definirse como un programa en ejecución, junto con toda la información necesaria para que el sistema operativo pueda administrarlo y reanudar su ejecución en cualquier momento.
+
+El desarrollo de sistemas multiprogramados, de tiempo compartido y de tiempo real hizo evidente la necesidad de coordinar múltiples programas ejecutándose de manera concurrente. Sin un mecanismo adecuado, aparecían problemas como sincronización incorrecta, violación de exclusión mutua, comportamientos no deterministas e interbloqueos (\emph{deadlocks}). El concepto de proceso proporciona una abstracción que permite al sistema operativo gestionar estas situaciones de forma sistemática.
+
+Un proceso está formado por tres componentes principales:
+\begin{enumerate}
+  \item El programa ejecutable.
+  \item Los datos asociados al programa (variables, buffers, espacio de trabajo, etc.).
+  \item Su contexto de ejecución (\emph{execution context}), que contiene toda la información necesaria para que el sistema operativo pueda suspender y reanudar su ejecución correctamente, incluyendo el contenido de los registros del procesador, el contador de programa, el estado del proceso y otra información administrativa.
+\end{enumerate}
+
+El sistema operativo mantiene una estructura de datos para cada proceso, desde la cual puede conocer su estado, asignarle recursos y realizar cambios de contexto (\emph{context switch}) entre distintos procesos. Gracias a esta abstracción, es posible administrar múltiples programas de forma segura y eficiente, proporcionando la base para mecanismos como la planificación, la sincronización y el uso compartido de recursos.
+
+Finalmente, un mismo proceso puede contener varios hilos de ejecución (\emph{threads}), los cuales comparten los recursos del proceso pero pueden ejecutarse concurrentemente.
+
+\subsubsection{Manejo de memoria}
+
+La gestión de memoria es una de las funciones fundamentales del sistema operativo, cuyo objetivo es administrar eficientemente la memoria principal y secundaria, garantizando tanto el aislamiento entre procesos como el acceso seguro a los recursos compartidos. Entre sus principales responsabilidades se encuentran la asignación dinámica de memoria, la protección y el control de acceso, el soporte para programas modulares y el almacenamiento persistente de la información.
+
+Para cumplir estos objetivos, los sistemas operativos modernos emplean dos mecanismos principales: el sistema de archivos, encargado del almacenamiento permanente de la información, y la memoria virtual, que proporciona a cada proceso un espacio de direcciones lógico independiente de la memoria física disponible.
+
+La memoria virtual permite ejecutar programas sin que estos deban conocer la organización física de la memoria. Para ello, las direcciones generadas por el programa (direcciones virtuales) son traducidas dinámicamente a direcciones físicas mediante la unidad de gestión de memoria (Memory Management Unit, MMU). Habitualmente, esta traducción se implementa mediante paginación, donde el espacio de direcciones se divide en páginas de tamaño fijo que pueden ubicarse en cualquier posición de la memoria principal. Si una página requerida no se encuentra en memoria, el sistema operativo la recupera desde el almacenamiento secundario antes de reanudar la ejecución del proceso.
+
+Gracias a estos mecanismos, el sistema operativo puede ejecutar múltiples procesos de forma concurrente, proteger sus espacios de memoria, optimizar el uso de la memoria física y ofrecer a los programas la ilusión de disponer de un espacio de memoria continuo y de gran tamaño.
+
+\subsubsection{Protección y seguridad de la información}
+
+A medida que los sistemas operativos evolucionaron hacia entornos multiusuario y conectados en red, surgió la necesidad de proteger tanto los recursos del sistema como la información almacenada. En este contexto, la protección y la seguridad buscan controlar el acceso a los recursos y garantizar el funcionamiento confiable del sistema.
+
+Los principales objetivos de la seguridad en un sistema operativo son:
+\begin{enumerate}
+  \item \textbf{Disponibilidad:} garantizar que el sistema y sus recursos permanezcan accesibles y operativos para los usuarios autorizados.
+  \item \textbf{Confidencialidad:} impedir el acceso no autorizado a la información.
+  \item \textbf{Integridad de los datos:} proteger la información frente a modificaciones no autorizadas o accidentales.
+  \item \textbf{Autenticidad:} verificar la identidad de los usuarios y la validez de los datos o mensajes intercambiados.
+\end{enumerate}
+
+\subsubsection{Planificación y gestión de recursos}
+
+El sistema operativo es responsable de administrar los recursos del computador, como el procesador, la memoria y los dispositivos de entrada/salida, asignándolos entre los procesos activos de forma ordenada y eficiente. Para ello, debe diseñar políticas de planificación que determinen qué proceso utilizará cada recurso y en qué momento.
+
+Toda política de planificación debe buscar un equilibrio entre tres objetivos fundamentales:
+\begin{enumerate}
+  \item \textbf{Equidad:} proporcionar un acceso justo a los recursos para todos los procesos con necesidades similares.
+  \item \textbf{Respuesta diferenciada:} adaptar la asignación de recursos según la prioridad o los requisitos específicos de cada proceso.
+  \item \textbf{Eficiencia:} maximizar el rendimiento del sistema, reduciendo los tiempos de respuesta y aprovechando al máximo los recursos disponibles.
+\end{enumerate}
+
+Para cumplir estos objetivos, el sistema operativo mantiene colas de procesos y emplea planificadores (\emph{schedulers}) que seleccionan, según la política establecida, cuál será el siguiente proceso en ejecutarse o en acceder a un determinado recurso. Los algoritmos de planificación constituyen uno de los aspectos más importantes del diseño de un sistema operativo y serán estudiados en capítulos posteriores.

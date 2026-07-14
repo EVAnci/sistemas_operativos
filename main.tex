@@ -8,8 +8,19 @@
 \setsansfont{CMU Sans Serif}
 \setmonofont{CMU Typewriter Text}
 
-\usepackage{graphicx}
 \usepackage{amsmath}
+
+% pgfplots and tikz for graphs
+\usepackage{tikz}
+\usepackage{pgfplots}
+\usetikzlibrary{calc, positioning, arrows.meta, decorations.markings, backgrounds, fadings}
+% this line is recomended by the pgfplots lastes stable version
+% see https://pgfplots.sourceforge.net/pgfplots.pdf
+\pgfplotsset{compat=1.18}
+
+% Figure and Subfigure environment
+\usepackage{graphicx}
+\usepackage{subcaption}
 
 \title{Sistemas Operativos}
 \author{Anci, Elio Valentino}
@@ -21,5 +32,7 @@
 \tableofcontents
 
 \include{chapters/01_unit/main}
+
+\include{chapters/02_unit/main}
   
 \end{document}
