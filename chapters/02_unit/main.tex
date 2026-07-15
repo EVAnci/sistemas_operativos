@@ -1,43 +1,5 @@
 \chapter{Procesos}
 
-\section{Descripción de proceso}
+\input{chapters/02_unit/1_intro.tex}
 
-Como se introdujo en el Capítulo \ref{chpt:intro}, un \textbf{proceso} puede definirse como un programa en ejecución. Más precisamente, es la entidad que el sistema operativo administra y asigna al procesador para su ejecución. Un proceso está compuesto por el código del programa, los datos asociados y toda la información necesaria para describir su estado de ejecución.
-
-Cada proceso se caracteriza por un conjunto de atributos, entre los que destacan:
-\begin{itemize}
-  \item Un identificador único (PID).
-  \item Su estado de ejecución.
-  \item Su prioridad.
-  \item El contador de programa (Program Counter, PC).
-  \item Los punteros a las regiones de memoria que utiliza.
-  \item El contexto del procesador (contenido de los registros).
-  \item Información sobre operaciones de entrada/salida y archivos abiertos.
-  \item Información administrativa, como el tiempo de CPU consumido o los recursos asignados.
-\end{itemize}
-
-Toda esta información se almacena en una estructura denominada \textbf{Bloque de Control de Proceso} (\emph{Process Control Block}, PCB), creada y administrada por el sistema operativo. El PCB contiene toda la información necesaria para suspender un proceso y reanudar posteriormente su ejecución sin alterar su funcionamiento. Para ello, cuando ocurre una interrupción o un cambio de contexto, el sistema operativo guarda en el PCB el estado actual del proceso y restaura el estado del siguiente proceso que será ejecutado.
-
-En consecuencia, un proceso puede entenderse como la combinación del programa, sus datos y el correspondiente PCB. Esta estructura constituye la base que permite al sistema operativo ejecutar múltiples procesos de forma concurrente mediante la planificación y el cambio de contexto.
-
-\section{Estados de un proceso}
-
-Cuando un programa se ejecuta, el sistema operativo crea un proceso para representarlo. Su ejecución puede analizarse desde dos puntos de vista:
-\begin{itemize}
-  \item Desde el punto de vista del programa, un proceso ejecuta una secuencia de instrucciones pertenecientes únicamente a ese programa. Esta secuencia recibe el nombre de traza (trace) del proceso.
-  \item Desde el punto de vista del procesador, este ejecuta instrucciones de distintos procesos de forma alternada. El contador de programa cambia entre procesos según las decisiones del sistema operativo, por lo que las trazas de los distintos procesos aparecen intercaladas.
-\end{itemize}
-Como ejemplo, supóngase que existen tres procesos, A, B y C, completamente cargados en memoria principal, además de un pequeño dispatcher encargado de realizar el cambio de contexto entre procesos.
-
-\begin{figure}[!ht]
-  \centering
-  \begin{tikzpicture}
-    
-  \end{tikzpicture}
-\end{figure}
-
-El sistema operativo aplica un quantum\footnote{Quantum: cantidad máxima de instrucciones (o, en general, de tiempo de CPU) que un proceso puede ejecutar antes de ser interrumpido por el planificador.} de 6 instrucciones, por lo que ningún proceso puede ejecutar más de seis instrucciones consecutivas antes de ser interrumpido. Inicialmente, el procesador ejecuta las seis primeras instrucciones del proceso A. Al agotarse el quantum, el dispatcher toma el control y transfiere la ejecución al proceso B.
-
-El proceso B ejecuta cuatro instrucciones y, en la cuarta, solicita una operación de entrada/salida (E/S). Como debe esperar a que esta finalice, el proceso pasa al estado de espera y el procesador, mediante el dispatcher, continúa con el proceso C. Tras finalizar el quantum de C, el procesador vuelve a A. Cuando A vuelve a agotar su quantum, B todavía sigue esperando la finalización de la operación de E/S, por lo que el sistema operativo selecciona nuevamente al proceso C.
-
-Este ejemplo muestra cómo, aunque cada proceso tiene su propia secuencia de ejecución, el procesador alterna entre ellos de acuerdo con la planificación del sistema operativo y con eventos como la expiración del quantum o la espera por operaciones de E/S.
+\input{chapters/02_unit/2_five_state_model.tex}
