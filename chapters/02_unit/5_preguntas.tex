@@ -1,0 +1,160 @@
+\section{Revisión de contenidos}
+
+A continuación, se presentan una serie de preguntas diseñadas para evaluar la compresión de los conceptos fundamentales presentados en el texto.
+
+\subsection{Preguntas sobre Procesos}
+
+\begin{enumerate}
+  \item ¿Qué es un proceso y en qué se diferencia de un programa?
+  \item ¿Qué información almacena el Bloque de Control de Proceso (PCB) y por qué es indispensable para el sistema operativo?
+  \item ¿Qué es la imagen de un proceso y cuáles son sus componentes principales?
+  \item ¿Qué es un cambio de contexto (context switch) y por qué es necesario?
+  \item ¿Cuáles son los estados básicos por los que puede pasar un proceso y qué representa cada uno?
+  \item ¿Qué significa que un proceso sea apropiado (preempted)?
+  \item ¿Qué eventos pueden provocar la creación de un proceso?
+  \item ¿Cuáles son las causas más comunes de terminación de un proceso?
+  \item ¿Qué tablas mantiene el sistema operativo para administrar los recursos del sistema?
+  \item ¿Por qué los procesadores implementan modo usuario y modo kernel?
+  \item ¿Qué diferencia existe entre un cambio de modo (mode switch) y un cambio de proceso (process switch)?
+  \item ¿Cuál es la diferencia entre una interrupción (interrupt) y una excepción o trap?
+  \item ¿Qué pasos realiza el sistema operativo para crear un nuevo proceso?
+  \item ¿Por qué el PCB es considerado la estructura de datos más importante para la gestión de procesos?
+  \item ¿Qué ventajas aporta el modelo de procesos en sistemas multiprogramados?
+  \item ¿Cuáles son los principales modelos de ejecución del núcleo y en qué se diferencian?
+  \item ¿Por qué en la ejecución del núcleo dentro del proceso de usuario normalmente solo ocurre un mode switch y no un process switch?
+\end{enumerate}
+
+\subsection*{Respuestas}
+
+\paragraph{Respuesta 1} 
+Un programa es un conjunto de instrucciones almacenadas en memoria. Un proceso es un programa en ejecución, junto con sus datos, recursos y contexto de ejecución administrados por el sistema operativo.
+
+\paragraph{Respuesta 2}
+Almacena el identificador del proceso, su estado, el contexto del procesador (registros y PC), información de planificación, memoria, recursos e información de contabilidad. Permite suspender y reanudar la ejecución de un proceso sin perder su estado.
+
+\paragraph{Respuesta 3}
+Es la representación completa de un proceso en memoria. Está formada por:
+\begin{itemize}
+  \item Código del programa.
+  \item Datos.
+  \item Pila.
+  \item Bloque de Control de Proceso (PCB).
+\end{itemize}
+
+\paragraph{Respuesta 4}
+Es la operación mediante la cual el sistema operativo guarda el estado del proceso que estaba ejecutándose y restaura el estado de otro proceso para continuar su ejecución.
+
+\paragraph{Respuesta 5}
+\begin{itemize}
+  \item Nuevo (New): el proceso acaba de ser creado.
+  \item Listo (Ready): puede ejecutarse, pero espera el procesador.
+  \item Ejecutando (Running): está utilizando el procesador.
+  \item Bloqueado (Blocked/Waiting): espera un evento, generalmente una operación de E/S.
+  \item Terminado (Exit): finalizó su ejecución.
+\end{itemize}
+
+\paragraph{Respuesta 6}
+Significa que el sistema operativo interrumpe temporalmente su ejecución para asignar el procesador a otro proceso, normalmente por expiración del quantum o por la llegada de un proceso de mayor prioridad.
+
+\paragraph{Respuesta 7}
+\begin{itemize}
+  \item Inicio de un trabajo (batch).
+  \item Inicio de sesión de un usuario.
+  \item Creación por parte del sistema operativo para brindar un servicio.
+  \item Creación por otro proceso (spawn).
+\end{itemize}
+
+\paragraph{Respuesta 8}
+\begin{itemize}
+  \item Finalización normal.
+  \item Error de ejecución (división por cero, instrucción inválida, etc.).
+  \item Violación de memoria o protección.
+  \item Intervención del sistema operativo o del usuario.
+  \item Terminación del proceso padre.
+\end{itemize}
+
+\paragraph{Respuesta 9}
+Generalmente mantiene tablas de:
+\begin{itemize}
+  \item Procesos.
+  \item Memoria.
+  \item Dispositivos de entrada/salida.
+  \item Archivos.
+\end{itemize}
+Estas estructuras contienen toda la información necesaria para administrar el sistema.
+
+\paragraph{Respuesta 10}
+Para proteger el sistema operativo y los recursos críticos. Las instrucciones privilegiadas y el acceso a recursos sensibles solo pueden ejecutarse en modo kernel.
+
+\paragraph{Respuesta 11}
+Un cambio de modo modifica únicamente el nivel de privilegio del procesador (usuario ↔ kernel), mientras continúa ejecutándose el mismo proceso.
+
+Un cambio de proceso implica guardar el contexto de un proceso y restaurar el de otro, cambiando completamente la ejecución.
+
+\paragraph{Respuesta 12}
+Una interrupción es un evento generalmente externo al proceso (por ejemplo, un dispositivo de E/S o el temporizador).
+
+Un trap o excepción es un evento interno provocado por la ejecución de una instrucción, como una llamada al sistema o una división por cero.
+
+\paragraph{Respuesta 13}
+\begin{enumerate}
+  \item Asigna un identificador único (PID).
+  \item Reserva memoria para la imagen del proceso.
+  \item Inicializa el PCB.
+  \item Inserta el proceso en las estructuras de planificación.
+  \item Actualiza las tablas de administración correspondientes.
+\end{enumerate}
+
+\paragraph{Respuesta 14}
+Porque contiene toda la información necesaria para administrar un proceso. Gracias al PCB el sistema operativo puede planificar procesos, asignar recursos, atender interrupciones y realizar cambios de contexto.
+
+\paragraph{Respuesta 15}
+Permite ejecutar múltiples programas de forma concurrente, compartir eficientemente el procesador y otros recursos, aislar procesos entre sí y simplificar la planificación y administración del sistema operativo.
+
+\paragraph{Pregunta 16}
+Existen tres modelos principales:
+\begin{itemize}
+  \item Núcleo independiente de los procesos (Nonprocess Kernel): el kernel se ejecuta como una entidad separada de los procesos de usuario, utilizando su propia memoria y pila.
+  \item Ejecución dentro del proceso de usuario: el kernel se ejecuta en el contexto del proceso que solicitó un servicio o fue interrumpido. Normalmente solo ocurre un cambio de modo (mode switch), y solo se realiza un cambio de proceso si el planificador lo decide.
+  \item Sistema operativo basado en procesos (Process-Based OS): las funciones del sistema operativo se implementan como procesos independientes, favoreciendo una arquitectura modular y facilitando la ejecución concurrente, especialmente en sistemas multiprocesador.
+\end{itemize}
+
+\paragraph{Pregunta 17}
+Porque el procesador continúa ejecutando el mismo proceso que originó la interrupción o la llamada al sistema. Únicamente cambia el nivel de privilegio de usuario a kernel (mode switch). Solo si el planificador decide ceder el procesador a otro proceso será necesario realizar un process switch, guardando el contexto del proceso actual y restaurando el de otro.
+
+\subsection{Preguntas sobre hilos}
+
+\begin{enumerate}
+  \item ¿Por qué se dice que un proceso es la unidad de asignación de recursos y un hilo la unidad de ejecución?
+  \item ¿Por qué cada hilo necesita su propia pila de ejecución, aunque comparta la memoria del proceso?
+  \item ¿Qué recursos son compartidos por los hilos de un mismo proceso y cuáles son privados?
+  \item ¿Por qué la comunicación entre hilos suele ser más eficiente que la comunicación entre procesos?
+  \item ¿Qué problema puede aparecer cuando varios hilos comparten memoria?
+  \item ¿Por qué los cambios de contexto entre hilos de usuario (ULT) son más rápidos que entre hilos de kernel (KLT)?
+  \item ¿Por qué una llamada al sistema bloqueante puede detener a todos los hilos en una implementación ULT?
+  \item ¿Qué ventaja tienen los KLT frente a los ULT en un sistema con varios procesadores?
+  \item ¿Cuál es el objetivo de un modelo híbrido que combina ULT y KLT?
+  \item ¿En qué situaciones resulta conveniente utilizar múltiples hilos en lugar de múltiples procesos?
+\end{enumerate}
+
+\subsection*{Respuestas}
+
+\paragraph{Respuesta 1} Porque el proceso posee el espacio de direcciones y los recursos (memoria, archivos, dispositivos, etc.), mientras que el hilo representa el flujo de ejecución que utiliza dichos recursos.
+
+\paragraph{Respuesta 2} Porque cada hilo mantiene su propio contexto de ejecución, incluyendo llamadas a funciones, variables locales y direcciones de retorno. Si compartieran la misma pila, interferirían entre sí.
+
+\paragraph{Respuesta 3} Comparten el espacio de direcciones, el código, los datos globales, los archivos abiertos y otros recursos del proceso. Cada hilo posee su propio contador de programa, registros, pila y contexto de ejecución.
+
+\paragraph{Respuesta 4} Porque los hilos comparten la misma memoria y pueden intercambiar información directamente, mientras que los procesos requieren mecanismos de comunicación proporcionados por el sistema operativo.
+
+\paragraph{Respuesta 5} Pueden producirse condiciones de carrera e inconsistencias si varios hilos modifican simultáneamente los mismos datos. Por ello es necesario utilizar mecanismos de sincronización.
+
+\paragraph{Respuesta 6} Porque los ULT son administrados completamente en espacio de usuario y no requieren cambiar al modo kernel. En cambio, los KLT necesitan la intervención del sistema operativo.
+
+\paragraph{Respuesta 7} Porque el kernel desconoce la existencia de los hilos y únicamente observa al proceso. Si el proceso se bloquea por una llamada al sistema, ninguno de sus hilos puede continuar ejecutándose.
+
+\paragraph{Respuesta 8} El kernel puede planificar distintos hilos de un mismo proceso sobre diferentes procesadores, permitiendo su ejecución en paralelo.
+
+\paragraph{Respuesta 9} Combinar la baja sobrecarga y flexibilidad de los ULT con la capacidad de paralelismo y manejo de bloqueos que ofrecen los KLT.
+
+\paragraph{Respuesta 10} Cuando varias tareas pertenecen a una misma aplicación y necesitan compartir datos o recursos de forma eficiente, ya que los hilos son más rápidos de crear, sincronizar y cambiar de contexto que los procesos.
