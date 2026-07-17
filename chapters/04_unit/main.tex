@@ -1,0 +1,278 @@
+\chapter{Concurrencia}
+
+La concurrencia es el fundamento del diseño de sistemas operativos. Ya sea por multiprogramación en un uniprocesador, por multiprocesamiento o por procesamiento distribuido, el sistema debe gestionar procesos que compiten por recursos, se comunican y necesitan sincronizarse.
+
+Antes de avanzar se presenta una lista con los términos utilizados, a modo de glosario.
+
+\begin{itemize}
+\item \textit{Operación atómica}: Función o acción implementada como una secuencia de una o más instrucciones que parece indivisible; es decir, ningún otro proceso puede ver un estado intermedio ni interrumpir la operación. La secuencia de instrucciones se garantiza que se ejecute como un grupo o no se ejecute en absoluto, sin producir ningún efecto visible en el estado del sistema. La atomicidad garantiza el aislamiento frente a procesos concurrentes.
+
+A modo de analogía, una operación atómica es semejante a retirar dinero de un cajero automático. En este caso, la transacción completa ---verificar el saldo, descontar el importe y entregar los billetes--- se ejecuta como una única unidad indivisible. En consecuencia, no es posible observar un estado intermedio en el que el dinero ya haya sido descontado pero todavía no se haya realizado la entrega.
+
+\item \textit{Sección crítica}: Porción de código dentro de un proceso que requiere acceso a recursos compartidos y que no debe ejecutarse mientras otro proceso se encuentre en una sección crítica correspondiente.
+
+\item \textit{Interbloqueo (Deadlock)}: Situación en la que dos o más procesos son incapaces de continuar porque cada uno está esperando a que otro realice alguna acción.
+
+\item \textit{Bloqueo vivo (Livelock)}: Situación en la que dos o más procesos cambian continuamente sus estados en respuesta a los cambios en los otros procesos sin realizar ningún trabajo útil.
+
+\item \textit{Exclusión mutua}: Requisito según el cual, cuando un proceso se encuentra en una sección crítica que accede a recursos compartidos, ningún otro proceso puede estar en una sección crítica que acceda a cualquiera de esos mismos recursos.
+
+\item \textit{Condición de carrera (Race condition)}: Situación en la que múltiples hilos o procesos leen y escriben un dato compartido, y el resultado final depende del orden relativo en que se ejecuten.
+
+\item \textit{Inanición (Starvation)}: Situación en la que un proceso ejecutable es ignorado indefinidamente por el planificador; aunque es capaz de proceder, nunca es seleccionado.
+\end{itemize}
+
+Algo importante al analizar la concurrencia es que, en general, los procesos deben compartir datos y, en particular, tienen permiso para acceder a memoria compartida o a regiones comunes del espacio de direcciones. Por el contrario, si dos procesos se ejecutan de manera completamente aislada, el sistema operativo garantiza su protección como se analizó durante todo el capítulo \ref{chpt:proc}, impidiendo que un proceso acceda arbitrariamente al espacio de direcciones de otro y anulando todos los problemas aquí analizados.
+
+Con esta idea en mente, nos centramos en el estudio de problemas en los que varios procesos deben cooperar: se comunican entre sí y coordinan su ejecución para alcanzar un objetivo común, donde cada uno realiza una tarea específica dentro del conjunto.
+
+El requisito central para que esto sea posible es la \textit{exclusión mutua}: garantizar que cuando un proceso se encuentra en su sección crítica, ningún otro pueda estar en una sección crítica que acceda a los mismos recursos compartidos. 
+
+Lograrlo solo por software, asumiendo únicamente que los accesos a una misma posición de memoria están serializados por hardware, puede ser difícil. Para evidenciarlo, se verá la construcción progresiva de la solución a través de cuatro intentos fallidos, cada uno corrige el anterior pero introduce un nuevo fallo clásico de la concurrencia. El lector podrá anticipar el recorrido:
+\begin{itemize}
+  \item \textbf{Intento 1} - Uso de variable \texttt{turn}: Se garantiza la exclusión mutua, pero impone una alternancia estricta de los procesos y provoca un bloqueo permanente si uno de ellos falla.
+  \item \textbf{Intento 2} - Banderas con verificación previa (\texttt{flag}): Cada proceso verifica primero la bandera del otro y luego declara su intención. Elimina la alternancia estricta, pero introduce una condición de carrera que rompe la exclusión mutua.
+  \item \textbf{Intento 3} - Banderas con reserva previa: Cada proceso declara primero su intención y luego verifica. Ahora sí se garantiza la exclusión mutua, pero si ambos reservan a la vez, se produce \textit{deadlock}.
+  \item \textbf{Intento 4} - Retroceso por cortesía: Para evitar el deadlock, cada proceso está dispuesto a ceder su bandera. Se evita el bloqueo mutuo, pero aparece el \textit{livelock}: ambos procesos pueden cambiar de estado indefinidamente sin progresar.
+\end{itemize}
+
+El análisis de por qué fallan estos cuatro enfoques permitirá entender las condiciones que debe cumplir cualquier solución correcta.
+
+\section{Exclusión Mutua}
+
+A continuación, se presenta una posible implementación codificada de cada intento, junto con los detalles particulares de cada caso. El código presentado está realizado usando el lenguaje de programación C y las librerías de hilos del sistema operativo Linux. Para probar las soluciones puede copiar y pegar el código, compilarlo y ejecutarlo usando los siguientes comandos en una terminal.
+\begin{bashcode}[title=Compilar y ejecutar ejemplos]
+gcc nombre_archivo.c -pthread -O0 -o nombre_archivo 
+./nombre_archivo
+\end{bashcode}
+
+Finalmente, se presenta una solución que garantiza la exclusión mutua al proporcionar una corrección adecuada para los cuatro problemas identificados.
+
+\subsubsection{Primer Intento: Alternancia Estricta mediante la Variable \texttt{turn}}
+
+El primer intento se basa en una única variable compartida \texttt{turn}, que indica explícitamente a qué proceso le corresponde el acceso a la sección crítica. El algoritmo impone un esquema de alternancia estricta.
+
+\begin{ccode}[title=Intento I]
+#include <pthread.h>
+#include <stdio.h>
+#include <unistd.h>
+
+volatile int turn = 0;
+
+void* process0(void* arg) {
+  for (int i = 0; i < 3; i++) {
+    printf("P0 trabaja 3 segundos fuera de la SC\n");
+    sleep(3);
+    while (turn != 0);
+
+    printf("P0 entra en la sección crítica durante 1 segundo\n");
+    sleep(1);
+    printf("P0 sale y cambia el turno\n\n");
+
+    turn = 1;
+
+    sleep(1);
+  }
+  return NULL;
+}
+
+void* process1(void* arg) {
+  for (int i = 0; i < 3; i++) {
+    printf("P1 esta listo y espera para poder entrar a la SC.\n\n");
+    while (turn != 1);
+
+    printf("P1 entra en la sección crítica\n");
+    sleep(0.2);
+    printf("P1 sale y cambia el turno\n\n");
+
+    turn = 0;
+  }
+  return NULL;
+}
+
+int main() {
+    pthread_t t0, t1;
+
+    pthread_create(&t0, NULL, process0, NULL);
+    pthread_create(&t1, NULL, process1, NULL);
+
+    pthread_join(t0, NULL);
+    pthread_join(t1, NULL);
+
+    return 0;
+}
+\end{ccode}
+
+Si bien esta construcción garantiza la exclusión mutua, el acceso queda completamente acoplado al ritmo del proceso más lento, ejecutando en un patrón de tipo \textit{ping-pong}.
+
+Al ejecutar el código del cuadro \texttt{Intento I}, la salida tendrá un aspecto tal como se muestra en el siguiente bloque. Al analizar el bloque se pueden observar dos cosas importantes: \texttt{(i)} el proceso P0 es el más lento y tiene el primer turno para entrar a la SC (\emph{sección crítica}). \texttt{(ii)} el proceso P1 es mucho más rápido que P0, pero si o si debe esperar su turno a pesar de que el recurso de la SC esté libre.
+
+\begingroup
+\footnotesize
+\begin{verbatim}
+P1 esta listo y espera para poder entrar a la SC.
+P0 trabaja 3 segundos fuera de la SC
+P0 entra en la sección crítica durante 1 segundo
+P0 sale y cambia el turno
+P1 entra en la sección crítica
+P1 sale y cambia el turno
+P1 esta listo y espera para poder entrar a la SC.
+P0 trabaja 3 segundos fuera de la SC
+P0 entra en la sección crítica durante 1 segundo
+ ...
+\end{verbatim}
+\endgroup
+
+En consecuencia, un proceso que se encuentra fuera de su sección crítica impide el progreso de otro que desea ingresar, aun cuando el recurso compartido se encuentra libre. Esta dependencia introduce un acoplamiento artificial entre la sección residual\footnote{Sección residual: aquella sección de código que está fuera de la sección crítica.} de un proceso y la sección crítica del otro, y provoca un bloqueo permanente si un proceso termina o falla fuera de la sección crítica.
+
+Además de lo anterior, un algoritmo de exclusión mutua correcto debe satisfacer tres propiedades fundamentales:
+\begin{enumerate}
+  \item Exclusión mutua: Solo un proceso puede estar en su sección crítica a la vez.
+  \item Progreso: Si ningún proceso se encuentra en su sección crítica y existen procesos que desean ingresar, la decisión sobre cuál ingresará a continuación solo puede involucrar a los procesos que no están en su sección residual y no puede postergarse indefinidamente.
+  \item Espera limitada: Ningún proceso debe esperar indefinidamente para ingresar a su sección crítica.
+\end{enumerate}
+
+El primer intento satisface la exclusión mutua y, en ausencia de fallos, la espera limitada. Sin embargo, viola la condición de progreso. Al forzar una secuencia estricta $0 \rightarrow 1 \rightarrow 0 \rightarrow 1$, el algoritmo exige la participación de un proceso que se encuentra en su sección residual para permitir el reingreso del otro.
+
+\subsubsection{Segundo Intento: Verificación Previa y Condición de Carrera}
+
+En este intento buscamos solucionar el problema del \texttt{Intento I}. El problema principal era que se viola la condición de progreso. Para permitir que un proceso más rápido pueda acceder a la sección crítica a su ritmo usamos banderas que indiquen si un proceso está en la sección crítica.
+
+\begin{ccode}[title=Intento II]
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <unistd.h>
+
+volatile bool flag[2] = {false, false};
+
+void* process0(void* arg) {
+  printf("P0 quiere entrar - Lee bandera de P1: %d\n",flag[1]);
+  /* Primero lee el estado de la bandera de P1
+     como no hay procesos en la SC, entrará*/
+  while (flag[1]); 
+  /* Una vez en SC, levanta su bandera */
+  usleep(100000);
+  flag[0] = true;
+  printf(">>> P0 entra a SC y coloca su bandera en true <<<\n");
+  sleep(2);
+  printf("<<< P0 sale de SC >>>\n");
+  flag[0] = false;
+  /* Al terminar, baja su bandera */
+  return NULL;
+}
+
+void* process1(void* arg) {
+  printf("P1 quiere entrar - Lee bandera de P0: %d\n",flag[0]);
+  while (flag[0]);
+
+  usleep(100000);
+  flag[1] = true;
+  printf(">>> P1 entra a SC y coloca su bandera en true <<<\n");
+  sleep(2);
+  printf("<<< P1 sale de SC >>>\n");
+  flag[1] = false;
+
+  return NULL;
+}
+
+int main() {
+  pthread_t t0, t1;
+
+  pthread_create(&t0, NULL, process0, NULL);
+  pthread_create(&t1, NULL, process1, NULL);
+
+  pthread_join(t0, NULL);
+  pthread_join(t1, NULL);
+
+  return 0;
+}
+\end{ccode}
+
+Una pequeña observación importante: aquí estamos introduciendo deliberadamente un \texttt{usleep()} para reproducir el fallo con facilidad. En realidad, el algoritmo ya es incorrecto aunque no haya ningún retraso artificial. Lo que ocurre es que, en una ejecución concreta, el planificador del sistema puede hacer que un hilo avance mucho más rápido que el otro y el error no se manifieste.
+
+El protocolo propuesto consiste en verificar primero la bandera del otro proceso y, solo si esta se encuentra en \texttt{false}, levantar la propia y proceder. De este modo, si un proceso falla fuera de la sección crítica, el otro no queda bloqueado, corrigiendo una de las limitaciones del intento 1.
+
+El defecto de esta implementación radica en el orden de las operaciones. La verificación \texttt{while(flag[j])} y el anuncio \texttt{flag[i] = true} constituyen dos operaciones no atómicas. Entre ambas puede intercalarse la ejecución del otro proceso.
+
+La ejecución del código propuesto en el cuadro \texttt{Intento II} demuestra la violación de la exclusión mutua:
+\begin{verbatim}
+P0 quiere entrar - Lee bandera de P1: false
+P1 quiere entrar - Lee bandera de P0: false
+>>> P0 entra a SC y coloca su bandera en true <<<
+>>> P1 entra a SC y coloca su bandera en true <<<
+<<< P0 sale de SC >>>
+<<< P1 sale de SC >>>
+\end{verbatim}
+Ambos procesos han entrado a la misma sección crítica al mismo tiempo, esto jamás debería ocurrir, viola la primer propiedad: Exclusión Mutua.
+
+Este comportamiento corresponde a una condición de carrera clásica de tipo \textit{check-then-act}. La corrección del protocolo depende de la velocidad relativa de ejecución, lo cual invalida su uso en un sistema concurrente. Si bien se resuelve la dependencia de la sección residual, se pierde la propiedad fundamental de exclusión mutua.
+
+\subsubsection{Tercer Intento: Anuncio Previo y Condición de Deadlock}
+
+El segundo intento falla porque la verificación \texttt{while(flag[j])} precede al anuncio \texttt{flag[i] = true}, es decir:
+\begin{ccode}
+while(flag[otro]);  // Reviso y si hay un Proceso en SC espero
+flag[mío]=true;     // Si estoy en la SC levanto mi bandera 
+\end{ccode}
+Esto permite que ambos procesos lean \texttt{false} simultáneamente. Entonces alguien pensó: ``Sencillo, levantemos primero la bandera'', de modo que se permutan las instrucciones quedando:
+\begin{ccode}
+flag[mío]=true;   // Anuncio que entraré a la SC levantando la bandera
+while(flag[otro]);// Reviso y si hay un Proceso en SC espero
+\end{ccode}
+El código con este cambio se muestra en el cuadro \texttt{Intento III}.
+
+\begin{ccode}[title=Intento III]
+#include <pthread.h>
+#include <stdbool.h>
+#include <stdio.h>
+#include <unistd.h>
+
+volatile bool flag[2] = {false, false};
+
+void* process0(void* arg) {
+  printf("P0 quiere entrar - Coloca bandera en true\n");
+  flag[0] = true;
+  usleep(100000);
+  printf("P0 lee bandera de P1: %s\n", flag[1] ? "true, espera":"false, continua");
+  while (flag[1]); 
+  printf(">>> P0 entra a SC <<<\n");
+  sleep(2);
+  printf("<<< P0 sale de SC >>>\n");
+  flag[0] = false;
+
+  return NULL;
+}
+
+void* process1(void* arg) {
+  printf("P1 quiere entrar - Coloca bandera en true\n");
+  flag[1] = true;
+  usleep(100000);
+  printf("P1 lee bandera de P0: %s\n", flag[0] ? "true, espera":"false, continua");
+  while (flag[0]);
+  printf(">>> P1 entra a SC <<<\n");
+  sleep(2);
+  printf("<<< P1 sale de SC >>>\n");
+  flag[1] = false;
+
+  return NULL;
+}
+
+int main() {
+  /* Lo mismo que en Intento II */
+}
+\end{ccode}
+
+Con este orden, la exclusión mutua queda garantizada. Considérese el caso en que $P_0$ se ejecuta primero. Tras ejecutar \texttt{flag[0] = true} y comprobar que ningún otro proceso tiene su flag levantada, ingresa a la sección crítica. Si $P_1$ intenta ingresar posteriormente, ejecuta \texttt{flag[1] = true} y queda bloqueado en \texttt{while(flag[0])}, dado que \texttt{flag[0]} permanece en \texttt{true} hasta que $P_0$ abandone su sección crítica. El mismo razonamiento aplica de forma simétrica para $P_1$.
+
+Sin embargo, en este intento la propiedad de exclusión mutua se logra a costa de introducir una condición de bloqueo mutuo (\emph{deadlock}). El fallo se manifiesta cuando ambos procesos levantan su bandera de forma concurrente, antes de que ninguno evalúe la condición de espera. 
+
+El error de este intento se manifiesta en la ejecución del código presentado. La salida que se muestra a continuación demuestra que ambos procesos han quedado a la espera de que el recurso se libere. Mas eso nunca va a suceder ya que verdaderamente no hay ningún proceso en la SC y el recurso está libre.
+\begin{verbatim}
+P0 quiere entrar - Coloca bandera en true
+P1 quiere entrar - Coloca bandera en true
+P0 lee bandera de P1: true, espera
+P1 lee bandera de P0: true, espera
+\end{verbatim}
+
+Esta situación cumple las primeras dos propiedades: Exclusión mutua y progreso, pero viola la tercer condición: Espera limitada. En este caso particular se puede ver que ambos procesos esperan indefinidamente a usar un recurso que está libre.

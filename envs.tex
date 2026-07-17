@@ -1,0 +1,75 @@
+\usepackage[most]{tcolorbox}
+
+% ----- CODIGO ----- %
+
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{backgray}{rgb}{0.95,0.95,0.96}
+\definecolor{pyblue}{rgb}{0.1, 0.4, 0.6}
+
+\newtcblisting{ccode}[1][]{
+  breakable,
+  enhanced,
+  arc=4pt,
+  outer arc=4pt,
+  boxrule=0.5pt,
+  colback=backgray,
+  colframe=pyblue!70!black,
+  left=5mm,
+  overlay={
+    \begin{tcbclipinterior}
+      \fill[gray!20] (frame.south west) rectangle ([xshift=5mm]frame.north west);
+    \end{tcbclipinterior}
+  },
+  fonttitle=\bfseries\small\ttfamily,
+  listing only,
+  listing options={
+    language=c,
+    basicstyle=\scriptsize\ttfamily,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{codepurple},
+    commentstyle=\color{codegreen}\itshape,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    tabsize=2
+  },
+  #1
+}
+
+
+\newtcblisting{bashcode}[1][]{
+  breakable,
+  enhanced,
+  arc=4pt,
+  outer arc=4pt,
+  boxrule=0.5pt,
+  colback=backgray,
+  colframe=pyblue!70!black,
+  left=5mm,
+  overlay={
+    \begin{tcbclipinterior}
+      \fill[gray!20] (frame.south west) rectangle ([xshift=5mm]frame.north west);
+    \end{tcbclipinterior}
+  },
+  fonttitle=\bfseries\small\ttfamily,
+  listing only,
+  listing options={
+    language=bash,
+    basicstyle=\small\ttfamily,
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{codepurple},
+    commentstyle=\color{codegreen}\itshape,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    stepnumber=1,
+    numbersep=8pt,
+    showstringspaces=false,
+    breaklines=true,
+    tabsize=2
+  },
+  #1
+}
