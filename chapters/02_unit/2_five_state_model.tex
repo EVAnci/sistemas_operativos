@@ -1,17 +1,6 @@
 \subsection{Modelo de cinco estados}
 
-El modelo de dos estados resulta insuficiente porque no distingue, dentro del estado \emph{No Ejecutando}, entre los procesos que están \emph{listos} para ejecutarse y los que están \emph{bloqueados} esperando una operación de E/S. Con una única cola, el despachador tendría que recorrerla buscando un proceso no bloqueado, en lugar de simplemente tomar el más antiguo.
-
-La solución es dividir el estado No Ejecutando en dos: Listo y Bloqueado. Además, se agregan los estados Nuevo y Salida, útiles para la gestión de procesos. Así, el modelo resulta tener cinco estados:
-\begin{enumerate}
-  \item Ejecución (Running): el proceso que se está ejecutando actualmente. En un sistema con un solo procesador, a lo sumo un proceso puede estar en este estado.
-  \item Listo (Ready): un proceso preparado para ejecutarse en cuanto se le dé la oportunidad.
-  \item Bloqueado (Blocked/Waiting): un proceso que no puede ejecutarse hasta que ocurra cierto evento, como la finalización de una operación de E/S.
-  \item Nuevo (New): un proceso recién creado, que aún no ha sido admitido por el SO en el conjunto de procesos ejecutables. Generalmente aún no se ha cargado en memoria principal, aunque ya existe su bloque de control de proceso (PCB).
-  \item Salida (Exit): un proceso que ha sido liberado del conjunto de procesos ejecutables, ya sea porque terminó normalmente o porque abortó por algún motivo.
-\end{enumerate}
-
-La figura \ref{fig:five_state_model} muestra las transiciones entre los estados.
+El modelo de dos estados resulta insuficiente porque no distingue, dentro del estado \emph{No Ejecutando}, entre los procesos que están \emph{listos} para ejecutarse y los que están \emph{bloqueados} esperando una operación de E/S. Con una única cola, el despachador tendría que recorrerla buscando un proceso Listo, lo que puede ser extremadamente costoso.
 
 \begin{figure}[!ht]
   \centering
@@ -48,26 +37,16 @@ La figura \ref{fig:five_state_model} muestra las transiciones entre los estados.
   \label{fig:five_state_model}
 \end{figure}
 
-\subsubsection{Estado Nuevo}
-
-La creación de un proceso ocurre en dos etapas:
+La solución es dividir el estado No Ejecutando en dos: Listo y Bloqueado. Además, se agregan los estados Nuevo y Salida, útiles para la gestión de procesos. Así, el modelo resulta tener cinco estados:
 \begin{enumerate}
-  \item El SO realiza tareas administrativas: asigna un identificador y construye las tablas necesarias para gestionar el proceso. En este punto el proceso está en estado Nuevo: el SO ya lo definió, pero aún no se compromete a ejecutarlo (por ejemplo, puede limitar la cantidad de procesos activos por rendimiento o memoria
-  disponible).
-  \item Mientras el proceso está en este estado, su información se mantiene en tablas de control en memoria principal, pero el código del programa y sus datos permanecen en almacenamiento secundario (disco).
+  \item Ejecución (Running): el proceso que se está ejecutando actualmente. En un sistema con un solo procesador, a lo sumo un proceso puede estar en este estado.
+  \item Listo (Ready): un proceso preparado para ejecutarse en cuanto se le dé la oportunidad.
+  \item Bloqueado (Blocked/Waiting): un proceso que no puede ejecutarse hasta que ocurra cierto evento, como la finalización de una operación de E/S.
+  \item Nuevo (New): un proceso recién creado, que aún no ha sido admitido por el SO en el conjunto de procesos ejecutables. Generalmente aún no se ha cargado en memoria principal, aunque ya existe su bloque de control de proceso (PCB).
+  \item Salida (Exit): un proceso que ha sido liberado del conjunto de procesos ejecutables, ya sea porque terminó normalmente o porque abortó por algún motivo.
 \end{enumerate}
 
-\subsubsection{Estado Salida}
-
-La terminación de un proceso también ocurre en dos etapas:
-\begin{enumerate}
-  \item El proceso finaliza (finalización natural, error irrecuperable, o abortado por otro proceso con autoridad suficiente) y pasa al estado Salida, esto implica que no puede volver a ser elegido para ejecución. 
-  \item El SO conserva temporalmente sus tablas e información, para que programas auxiliares puedan extraer datos necesarios. Por ejemplo un programa de registro de uso puede necesitar registrar el tiempo de procesador usado con fines de telemetría, o historial del proceso para análisis de rendimiento. Una vez extraída esa información, el SO elimina el proceso.
-\end{enumerate}
-
-\subsubsection{Transiciones entre estados} 
-
-Las transiciones de la figura \ref{fig:five_state_model} se detallan a continuación:
+Las transiciones entre estados, que se muestran en la figura \ref{fig:five_state_model}, se detallan a continuación:
 \begin{itemize}
   \item Null \(\to\) Nuevo: se crea un nuevo proceso para ejecutar un programa.
 
@@ -88,7 +67,7 @@ Las transiciones de la figura \ref{fig:five_state_model} se detallan a continuac
 
 \subsubsection{Colas de Listos y Bloqueados}
 
-Una implementación sencilla usaría solo dos colas: Listos y Bloqueados. Todo proceso admitido entra a la cola de Listos; el SO elige de ahí el siguiente a ejecutar (FIFO si no hay prioridades). Al salir de ejecución, el proceso pasa a la cola de Listos o de Bloqueados según corresponda.
+Una implementación sencilla usaría solo dos colas: Listos y Bloqueados. Todo proceso admitido entra a la cola de Listos; el despachador elige de ahí el siguiente a ejecutar (FIFO\footnote{FIFO: First In First Out} si no hay prioridades). Al salir de ejecución, el proceso pasa a la cola de Listos o de Bloqueados según corresponda.
 
 El problema de esta implementación con una \'unica cola de Bloqueados es que, cuando ocurre un evento, el SO debe recorrer toda la cola buscando los procesos que esperaban específicamente ese evento --- en un sistema grande, esta cola puede tener cientos o
 miles de procesos.
@@ -104,21 +83,20 @@ Para evitar dicho problema, se emplea una cola de Bloqueados por cada tipo de ev
 
 De forma análoga, si el despacho se basa en prioridades, conviene tener una cola de Listos por cada nivel de prioridad, para poder ubicar rápidamente al proceso listo de mayor prioridad que lleva más tiempo esperando.
 
-\subsection{El Estado Suspendido}
+\subsection{El Estado Suspendido (7 Estados)}
 
-\paragraph{Necesidad del intercambio (\emph{swapping})} Con los estados planteados anteriormente, un problema persiste: como el procesador es mucho más rápido que la E/S, es común que todos los procesos en memoria terminen esperando E/S al mismo tiempo, dejando al procesador ocioso incluso con multiprogramación.
+Con los estados planteados anteriormente, un problema persiste: como el procesador es mucho más rápido que la E/S, es común que todos los procesos en memoria terminen esperando E/S al mismo tiempo, dejando al procesador ocioso incluso con multiprogramación.
 
 Ampliar la memoria principal no es una solución sostenible ya que primero, existe un costo asociado con la memoria principal; aunque es pequeño por cada byte comparado con los registros, el costo comienza a ser notorio a medida que pasamos a gigabytes de almacenamiento. Segundo, la demanda de memoria por parte de los programas ha crecido al mismo ritmo que el costo de la memoria ha disminuido. Por lo tanto, más memoria se traduce en procesos más grandes, no en más procesos. 
 
 La alternativa es el intercambio (swapping): cuando ningún proceso en memoria está Listo, el SO saca a disco uno de los procesos Bloqueados, moviéndolo a una cola de suspendidos, liberando así espacio para traer otro proceso (uno nuevo o uno previamente suspendido).
 
-Esto obliga a agregar un nuevo estado: \textbf{Suspendido}. Un proceso Bloqueado pasa a estar \textbf{Bloqueado y suspendido} cuando es sacado a disco.
+Esto obliga a agregar un nuevo estado: Suspendido. Un proceso Bloqueado pasa a estar Bloqueado y suspendido cuando es sacado a disco.
 
-\paragraph{Dos nuevos estados}
 Sin embargo, cada proceso suspendido originalmente esperaba un evento particular; cuando ese evento ocurre, el proceso deja de estar bloqueado, aunque siga en disco. Por lo tanto, hay dos dimensiones independientes: si el proceso espera un evento (bloqueado o no) y si fue sacado de memoria principal (suspendido o no). Esto da una combinación \(2\times2\), de la cual surgen los dos estados nuevos:
 \begin{itemize}
-  \item \textbf{Bloqueado/Suspendido:} el proceso está en memoria secundaria, esperando un evento.
-  \item \textbf{Listo/Suspendido:} el proceso está en memoria secundaria, pero disponible para ejecutarse en cuanto sea cargado de nuevo a memoria principal.
+  \item Bloqueado/Suspendido: el proceso está en memoria secundaria, esperando un evento.
+  \item Listo/Suspendido: el proceso está en memoria secundaria, pero disponible para ejecutarse en cuanto sea cargado de nuevo a memoria principal.
 \end{itemize}
 
 Así, el diagrama de la figura \ref{fig:five_state_model} resultaría como el de la figura \ref{fig:five_state_model_with_suspend} al agregar los estados suspendidos.
@@ -165,39 +143,82 @@ Así, el diagrama de la figura \ref{fig:five_state_model} resultaría como el de
     \draw[->,dashed] (new.south east) -- node[left]{Admit} (ready.north);
     \draw[->,dashed] (run.north) to[out=150,in=30] node[above right]{suspend} ($(sready.north)!0.6!(sready.north east)$);
   \end{tikzpicture}
-  \caption{Modelo de 5 estados con estado suspendido.}
+  \caption{Modelo de 7 estados.}
   \label{fig:five_state_model_with_suspend}
 \end{figure}
 
 \subsubsection{Transiciones con estados suspendidos}
 
+La suspensión agrega dos operaciones básicas: suspender (memoria $\to$ disco) 
+para liberar memoria, y activar (disco $\to$ memoria) para traer procesos de vuelta. Las transiciones adicionales al modelo de 5 estados son:
 \begin{itemize}
-  \item \textbf{Bloqueado $\to$ Bloqueado/Susp:} se usa para liberar memoria cuando no hay procesos Listos, o incluso habiéndolos, si el SO determina que el proceso en ejecución (o el que quiere despachar) necesita más memoria.
-  \item \textbf{Bloqueado/Susp $\to$ Listo/Susp:} ocurre el evento esperado, pero el proceso sigue en disco (el SO debe poder acceder a la información de estado de los procesos suspendidos).
-  \item \textbf{Listo/Susp $\to$ Listo:} el SO trae un proceso de vuelta a memoria porque no hay procesos Listos en memoria principal, o porque este proceso suspendido tiene mayor prioridad que los que sí están en memoria.
-  \item \textbf{Listo $\to$ Listo/Susp:} normalmente se prefiere suspender procesos Bloqueados antes que Listos (un proceso Listo sí puede ejecutarse). Pero puede ser necesario si es la única forma de liberar suficiente memoria, o si conviene suspender un Listo de
-  baja prioridad en vez de un Bloqueado de alta prioridad que se espera desbloquear pronto.
+  \item Suspensión para liberar memoria:
+  \begin{itemize}
+    \item Bloqueado $\to$ Bloqueado/Susp: es el caso preferido. No hay procesos Listos y hay que hacer lugar.
+    \item Listo $\to$ Listo/Susp: solo si no alcanza con suspender bloqueados, o si conviene sacar un Listo de baja prioridad para dejar un Bloqueado de alta prioridad que se espera que se desbloquee pronto.
+    \item Ejecución $\to$ Listo/Susp: variante de lo anterior con apropiación. El SO expulsa al proceso en ejecución directamente a disco para darle su memoria a un proceso más prioritario.
+  \end{itemize}
+
+  \item Activación para ocupar memoria:
+  \begin{itemize}
+    \item Listo/Susp $\to$ Listo: no hay Listos en memoria o vuelve uno con mayor prioridad.
+    \item Bloqueado/Susp $\to$ Bloqueado: se trae un bloqueado de alta prioridad cuyo evento se espera pronto, en lugar de un Listo/Susp de baja prioridad.
+  \end{itemize}
+
+  \item Eventos que ocurren en disco y casos de borde:
+  \begin{itemize}
+    \item Bloqueado/Susp $\to$ Listo/Susp: el evento esperado ocurrió, pero el SO mantiene al proceso en disco hasta decidir si lo activa.
+    \item Nuevo $\to$ Listo y Nuevo $\to$ Listo/Susp: política de admisión. El SO puede admitir directamente a memoria o dejarlo en disco si quiere reservar memoria.
+    \item Cualquier $\to$ Salida: un proceso puede terminar desde cualquier estado, por ejemplo si el padre termina a sus hijos. No es exclusiva del modelo suspendido.
+  \end{itemize}
 \end{itemize}
 
-\paragraph{Otras transiciones}
+\subsubsection{Otros usos de la suspensión}
 
-\begin{itemize}
-  \item \textbf{Nuevo $\to$ Listo/Susp} y \textbf{Nuevo $\to$ Listo:} el SO puede admitir procesos nuevos directamente a memoria (Listo) o dejarlos en disco (Listo/Susp) si prefiere reservar memoria para procesos ya en curso.
-  \item \textbf{Bloqueado/Susp $\to$ Bloqueado:} puede convenir traer un proceso bloqueado de mayor prioridad si se espera que su evento ocurra pronto, en vez de traer uno Listo/Susp de menor prioridad. 
-  \item \textbf{Ejecución $\to$ Listo/Susp:} si el SO apropia (\emph{preempt}) el proceso en ejecución porque un proceso de mayor prioridad en Bloqueado/Susp acaba de desbloquearse, puede mandar directamente el proceso en ejecución a Listo/Susp para liberar memoria. 
-  \item \textbf{Cualquier estado $\to$ Salida:} generalmente un proceso termina desde Ejecución, pero algunos SO permiten que un proceso padre termine a un hijo (o que la terminación del padre termine a sus hijos) desde cualquier estado.
-\end{itemize}
+Hasta ahora se ha utilizado la suspensión como mecanismo de intercambio a disco para liberar memoria. En general, un proceso suspendido es un proceso cuya ejecución fue congelada explícitamente por una entidad de control.
 
-\paragraph{Otros usos de la suspensión}
-
-El concepto de proceso suspendido puede generalizarse más allá de ``estar fuera de memoria principal''. Un proceso suspendido se caracteriza por:
-
+Se caracteriza por:
 \begin{enumerate}
-  \item No está disponible de inmediato para ejecución. \item Puede o no estar esperando un evento; esa condición es independiente de estar suspendido (que ocurra el evento no lo
-  habilita a ejecutarse de inmediato).
-  \item Fue puesto en ese estado por un \textbf{agente} (él mismo, su proceso padre, o el SO) con el fin de impedir su ejecución.
-  \item Solo ese mismo agente puede sacarlo del estado suspendido.
+  \item No es elegible para ejecución, esté o no en memoria principal.
+  \item Es ortogonal al bloqueo: un proceso puede estar suspendido y listo para ejecutar (Listo/Susp), o suspendido y esperando un evento (Bloqueado/Susp). Que ocurra el evento no lo vuelve ejecutable por sí solo, debe ser activado primero.
+  \item Entra y sale de ese estado por una acción explícita de control. Por regla general, solo el agente que lo suspendió puede reanudarlo: el propio proceso, su padre, el usuario, el depurador o el SO.
 \end{enumerate}
+Además de la gestión de memoria, el SO y los usuarios usan esta capacidad para:
+depuración interactiva o monitoreo,
+sospecha de interbloqueo (\emph{deadlock}),
+procesos periódicos que conviene mantener inactivos fuera de memoria,
+control padre-hijo, donde un padre suspende a sus hijos.
 
-Algunos motivos de suspensión, además de liberar memoria: monitoreo o auditoría del sistema, sospecha de un problema (p. ej.\ interbloqueo, \emph{deadlock}), depuración por parte de un usuario interactivo, procesos periódicos que conviene mantener fuera de memoria mientras están inactivos, o un proceso padre que suspende a un hijo. En todos los casos, solo el agente que originó la suspensión puede reactivar al proceso.
+\section{Causas de creación y terminación de procesos}
+\label{ssec_creac_y_fin_procesos}
 
+Todo proceso posee un ciclo de vida delimitado por su creación y su terminación.
+
+\subsection{Causas de creación}
+
+La creación de un proceso consiste en construir las estructuras de datos necesarias para administrarlo (principalmente su PCB) y reservar el espacio de memoria que utilizará durante su ejecución.
+
+Las causas más habituales de creación de un proceso son:
+\begin{itemize}
+  \item Envío de un nuevo trabajo o envío por lotes (\emph{batch job}).
+  \item Inicio de sesión de un usuario en un sistema interactivo.
+  \item Creación por parte del sistema operativo para proporcionar un servicio (por ejemplo, administrar una impresión).
+  \item Creación por otro proceso (\emph{process spawning}).
+\end{itemize}
+En los sistemas modernos es frecuente que un proceso pueda crear otros procesos. El proceso original recibe el nombre de proceso padre, mientras que el nuevo proceso se denomina proceso hijo.
+
+\subsection{Causas de terminación}
+
+Un proceso puede finalizar de forma normal cuando completa su ejecución y solicita al sistema operativo su terminación. En sistemas interactivos, esto suele ocurrir cuando el usuario cierra una aplicación o finaliza su sesión.
+
+Además de la finalización normal, un proceso puede terminar debido a distintos errores o condiciones excepcionales. Entre las causas más comunes se encuentran:
+\begin{itemize}
+  \item Exceder el tiempo máximo de ejecución.
+  \item Falta de memoria disponible.
+  \item Violaciones de memoria o de protección.
+  \item Errores aritméticos (por ejemplo, división por cero).
+  \item Errores de entrada/salida.
+  \item Ejecución de instrucciones inválidas o privilegiadas.
+  \item Intervención del sistema operativo o del administrador.
+  \item Terminación del proceso padre o solicitud explícita de este.
+\end{itemize}

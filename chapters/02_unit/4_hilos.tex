@@ -164,13 +164,3 @@ Este enfoque permite que:
   \item Se combinen la eficiencia de los ULT con las capacidades de planificación y paralelismo de los KLT.
 \end{itemize}
 Si está bien diseñado, un sistema híbrido aprovecha las ventajas de ambos modelos y reduce sus desventajas.
-
-\subsection{Otras relaciones}
-
-Tradicionalmente, un proceso era a la vez unidad de asignación de recursos y de ejecución, con relación \textbf{1:1} entre proceso e hilo. Luego surgieron los modelos \textbf{muchos-a-uno} (multihilo clásico), \textbf{muchos-a-muchos} y \textbf{uno-a-muchos}.
-
-\paragraph{Relación muchos-a-muchos}
-Múltiples hilos pueden ejecutarse en un mismo proceso, pero un mismo hilo también puede migrar entre distintos procesos o espacios de direcciones. Este modelo fue explorado por el SO experimental \textit{TRIX}, que distinguía entre \textbf{Dominio} (espacio de direcciones y recursos) e \textbf{Hilo} (unidad de ejecución). Permite ejecutar partes de una aplicación en espacios aislados sin el costo de crear nuevos procesos.
-
-\paragraph{Relación uno-a-muchos}
-Propia de sistemas operativos distribuidos. Un mismo hilo se desplaza entre procesos e incluso entre computadoras, transportando su contexto, parámetros y prioridad. El hilo representa la actividad del usuario y el proceso solo aporta el espacio de direcciones temporal. Facilita la distribución de carga, el acceso a recursos remotos y la transparencia de la distribución.

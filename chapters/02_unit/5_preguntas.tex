@@ -10,7 +10,7 @@ A continuación, se presentan una serie de preguntas diseñadas para evaluar la 
   \item ¿Qué es la imagen de un proceso y cuáles son sus componentes principales?
   \item ¿Qué es un cambio de contexto (context switch) y por qué es necesario?
   \item ¿Cuáles son los estados básicos por los que puede pasar un proceso y qué representa cada uno?
-  \item ¿Qué significa que un proceso sea apropiado (preempted)?
+  \item Realizar el diagrama de 7 estados de un proceso (5 estados $+$ estado suspendido).
   \item ¿Qué eventos pueden provocar la creación de un proceso?
   \item ¿Cuáles son las causas más comunes de terminación de un proceso?
   \item ¿Qué tablas mantiene el sistema operativo para administrar los recursos del sistema?
@@ -27,7 +27,7 @@ A continuación, se presentan una serie de preguntas diseñadas para evaluar la 
 \subsection*{Respuestas}
 
 \paragraph{Respuesta 1} 
-Un programa es un conjunto de instrucciones almacenadas en memoria. Un proceso es un programa en ejecución, junto con sus datos, recursos y contexto de ejecución administrados por el sistema operativo.
+Un programa es un conjunto de instrucciones almacenadas en disco. Un proceso es un programa en memoria principal que puede ser ejecutado, junto con sus datos, recursos y contexto de ejecución administrados por el sistema operativo.
 
 \paragraph{Respuesta 2}
 Almacena el identificador del proceso, su estado, el contexto del procesador (registros y PC), información de planificación, memoria, recursos e información de contabilidad. Permite suspender y reanudar la ejecución de un proceso sin perder su estado.
@@ -54,7 +54,7 @@ Es la operación mediante la cual el sistema operativo guarda el estado del proc
 \end{itemize}
 
 \paragraph{Respuesta 6}
-Significa que el sistema operativo interrumpe temporalmente su ejecución para asignar el procesador a otro proceso, normalmente por expiración del quantum o por la llegada de un proceso de mayor prioridad.
+Ver figura \ref{fig:five_state_model_with_suspend}.
 
 \paragraph{Respuesta 7}
 \begin{itemize}
