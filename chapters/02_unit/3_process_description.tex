@@ -60,9 +60,9 @@ La imagen puede no estar completamente en memoria principal: por paginación o \
 \end{itemize}
 En consecuencia, el SO no necesita conocer de antemano dónde está cada parte de la imagen: le basta con encontrar el PCB, y desde él puede localizar todo lo demás. El PCB es, por definición, la única parte de la imagen que permite acceder a todas las demás.
 
-¿Cómo encuentra el sistema operativo al PCB? Este es el aspecto fundamental del mecanismo de control. A diferencia del resto de la imagen, que puede estar paginada y dispersa, el PCB tiene una ubicación privilegiada y siempre accesible. El PCB no se almacena en el espacio de usuario del proceso. Se almacena en el espacio de memoria del propio kernel, en una región \emph{residente y no paginable}. El sistema operativo mantiene el acceso al PCB de cada proceso existente en las tablas de procesos anteriormente vista.
+¿Cómo encuentra el sistema operativo al PCB? Este es el aspecto fundamental del mecanismo de control. A diferencia del resto de la imagen, que puede estar paginada y dispersa, el PCB tiene una ubicación privilegiada y siempre accesible. El PCB no se almacena en el espacio de usuario del proceso. Se almacena en el espacio de memoria del propio kernel, en una región \emph{residente y no paginable}. El sistema operativo mantiene el acceso al PCB de cada proceso existente en las tablas de procesos (Figura \ref{fig:os_tables}).
 
-El SO encuentra un PCB específico mediante dos vías:
+Para encontrar un PCB específico, el sistema operativo puede proceder mediante dos vías:
 \begin{enumerate}
   \item Proceso en ejecución: El kernel mantiene un puntero global, usualmente denominado \texttt{current} o \texttt{running}, que apunta siempre al PCB del proceso que actualmente posee la CPU. Ante una interrupción, llamada al sistema o excepción, el hardware transfiere el control al kernel, y este ya conoce el PCB actual sin necesidad de búsqueda.
   \item Cualquier otro proceso: Para localizar un proceso diferente (por ejemplo, para planificarlo o enviarle una señal), el SO utiliza su identificador único (\emph{PID}). El PID actúa como índice o clave de búsqueda en la Tabla de Procesos, lo que devuelve inmediatamente la dirección del PCB correspondiente.

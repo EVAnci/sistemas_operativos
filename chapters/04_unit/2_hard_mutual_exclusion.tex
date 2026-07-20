@@ -1,1 +1,178 @@
 \subsection{Implementación por Hardware}
+
+La implementación de exclusión mutua por hardware consiste en cumplir los 6 requisitos de la exclusión mutua a través de soluciones de hardware. Existen dos alternativas posibles: \texttt{(i)} deshabilitar interrupciones y \texttt{(ii)} instrucciones especiales.
+
+\subsubsection{Deshabilitar interrupciones}
+
+La idea es relativamente simple, pero puede ser implementada únicamente en sistema de un solo procesador. 
+
+Mientras un proceso se decide a entrar en su sección crítica, realiza una llamada al sistema operativo para que deshabilite las interrupciones. De esta manera el proceso se apropia del procesador durante la sección crítica. 
+
+En este caso, como solo un único proceso puede utilizar el procesador a la vez, la exclusión mutua está garantizada.
+
+Sin embargo esta solución presenta dos desventajas importantes: 
+\begin{enumerate}
+  \item Al deshabilitar interrupciones la eficiencia de ejecución puede verse severamente degradada,
+  \item Solo funciona en sistemas con un procesador.
+\end{enumerate}
+
+\subsubsection{Instrucciones especiales}
+
+En sistemas multiprocesador no existe una relación maestro--esclavo entre procesadores, por lo que la exclusión mutua no puede implementarse mediante interrupciones. En su lugar, el hardware proporciona instrucciones atómicas, capaces de realizar varias operaciones sobre una misma posición de memoria como una única operación indivisible. Durante su ejecución, ningún otro procesador puede acceder a dicha posición de memoria.
+
+Estas instrucciones requieren soporte del hardware; si la arquitectura no las implementa, no es posible utilizarlas para sincronización.
+
+\paragraph{Test and Set (TS)}
+La instrucción \textit{test and set} (TS) comprueba el valor de una variable compartida y, si esta se encuentra libre (valor 0), la establece en 1 de forma atómica, indicando que el recurso ha sido adquirido. Si la variable ya vale 1, la instrucción indica que otro proceso posee el recurso. Al tratarse de una operación atómica, ningún otro proceso puede modificar la variable durante su ejecución.
+\begin{ccode}[title=Ejemplo de firma de la instrucción TS]
+boolean testset (int& i) {
+  if (i == 0) {
+    i = 1;
+    return true;
+  } else {
+    return false;
+  }
+}
+\end{ccode}
+El siguiente algoritmo implementa exclusión mutua mediante una variable compartida \texttt{cerrojo}, inicialmente igual a 0. Un proceso permanece en \textit{busy waiting} hasta que \texttt{testset} logra establecer el valor de \texttt{cerrojo} en 1, momento en el que obtiene acceso exclusivo a la sección crítica. Al finalizar, restablece el valor de \texttt{cerrojo} a 0 para permitir el acceso a otro proceso.
+
+\begin{ccode}[title=Exclusión mutua usando TS]
+/* programa de exclusion mutua */
+const int n = /* numero de procesos */
+int cerrojo;
+
+void P(int i) {
+  while (true) {
+    while (!testset(cerrojo)) {
+      /* no hacer nada */;
+    }
+
+    /* sección critica */;
+
+    cerrojo = 0;
+
+    /* resto */
+  }
+}
+
+void main() {
+  cerrojo = 0;
+  paralelos(P(1), P(2), ..., P(n));
+}
+\end{ccode}
+
+Si bien esta implementación guarda un parecido sintáctico con el Intento I, pues ambas supeditan el acceso a la Sección Crítica a la consulta de una variable compartida mediante espera activa, su semántica es distinta.
+
+En el Intento I, la variable \texttt{turn} denota identidad: indica a qué proceso le toca entrar, lo que impone una alternancia estricta. En la solución por hardware, la variable \texttt{cerrojo} denota estado: indica si la Sección Crítica está ocupada o libre. Este cambio transforma el acceso de una cesión obligatoria del turno a un modelo de contención libre.
+
+\paragraph{Compare and Swap (CAS)}
+
+La instrucción \textit{compare and swap} (CAS) compara el contenido de una posición de memoria con un valor esperado. Si ambos coinciden, reemplaza el contenido por un nuevo valor; en caso contrario, la memoria permanece inalterada. Toda la operación se ejecuta de forma atómica.
+
+\begin{verbatim}
+int compare_and_swap (int *word, int testval, int newval)
+{
+    int oldval;
+    oldval = *word;
+    if (oldval == testval)
+        *word = newval;
+    return oldval;
+}
+\end{verbatim}
+
+El siguiente algoritmo implementa exclusión mutua utilizando una variable compartida \texttt{bolt}, inicialmente igual a 0. Un proceso solo puede entrar en su sección crítica si logra cambiar atómicamente el valor de \texttt{bolt} de 0 a 1. Los demás procesos permanecen en \textit{busy waiting} hasta que el recurso sea liberado.
+
+\begin{verbatim}
+/* program mutualexclusion */
+const int n = /* number of processes */;
+int bolt;
+
+void P(int i)
+{
+    while (true) {
+        while (compare_and_swap(&bolt, 0, 1) == 1)
+            /* do nothing */;
+
+        /* critical section */
+
+        bolt = 0;
+
+        /* remainder */
+    }
+}
+
+void main() {
+    bolt = 0;
+    parbegin(P(1), P(2), ..., P(n));
+}
+\end{verbatim}
+
+\paragraph{Exchange}
+
+La instrucción \textit{exchange} intercambia de forma atómica el contenido de un registro con el de una posición de memoria.
+
+\begin{verbatim}
+void exchange (int *register, int *memory)
+{
+    int temp;
+    temp = *memory;
+    *memory = *register;
+    *register = temp;
+}
+\end{verbatim}
+
+En el siguiente algoritmo, cada proceso dispone de una variable local \texttt{key}, inicializada en 1, mientras que la variable compartida \texttt{bolt} comienza en 0. Mediante la operación atómica \texttt{exchange}, un proceso obtiene acceso a la sección crítica únicamente cuando consigue que \texttt{bolt} pase a valer 1. Al salir, restablece su valor a 0.
+
+\begin{verbatim}
+/* program mutualexclusion */
+const int n = /* number of processes */;
+int bolt;
+
+void P(int i)
+{
+    while (true) {
+        int keyi = 1;
+
+        do
+            exchange(&keyi, &bolt);
+        while (keyi != 0);
+
+        /* critical section */
+
+        bolt = 0;
+
+        /* remainder */
+    }
+}
+
+void main() {
+    bolt = 0;
+    parbegin(P(1), P(2), ..., P(n));
+}
+\end{verbatim}
+
+Durante toda la ejecución se cumple el siguiente invariante:
+
+\[
+\text{bolt} + \sum_i \text{key}_i = n
+\]
+
+Si $\text{bolt}=0$, ningún proceso se encuentra en la sección crítica. Si $\text{bolt}=1$, exactamente un proceso está ejecutando su sección crítica, siendo aquel cuyo $\text{key}=0$.
+
+\paragraph{Ventajas y desventajas}
+
+Las instrucciones especiales presentan las siguientes ventajas:
+
+\begin{itemize}
+    \item Funcionan con cualquier número de procesos, tanto en sistemas monoprocesador como multiprocesador.
+    \item Son simples y fáciles de verificar.
+    \item Permiten implementar múltiples secciones críticas utilizando una variable de sincronización distinta para cada una.
+\end{itemize}
+
+Sin embargo, también presentan importantes desventajas:
+
+\begin{itemize}
+    \item Utilizan \textit{busy waiting} (\textit{spin waiting}), por lo que un proceso consume tiempo de CPU mientras espera acceder a la sección crítica.
+    \item Puede producirse \textbf{inanición} (\textit{starvation}), ya que no existe garantía de que todos los procesos obtengan eventualmente acceso.
+    \item Puede producirse \textbf{interbloqueo} (\textit{deadlock}) por inversión de prioridades. Por ejemplo, si un proceso de baja prioridad entra en la sección crítica y es interrumpido por otro de mayor prioridad que intenta acceder al mismo recurso, este último quedará esperando indefinidamente mientras impide que el primero continúe su ejecución.
+\end{itemize}
