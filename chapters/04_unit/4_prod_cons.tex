@@ -1,0 +1,61 @@
+\section{Problema productor-consumidor}
+
+El \textit{problema productor-consumidor} modela la comunicación entre procesos mediante un \textit{búfer compartido} de tamaño finito. Uno o más procesos \textit{productores} generan elementos y los insertan en el búfer, mientras que uno o más procesos \textit{consumidores} los extraen para procesarlos.
+
+La sincronización debe garantizar que:
+
+\begin{itemize}
+  \item Un productor no inserte elementos cuando el búfer esté lleno.
+  \item Un consumidor no extraiga elementos cuando el búfer esté vacío.
+  \item El acceso al búfer sea mutuamente excluyente.
+\end{itemize}
+
+Para resolver el problema se utilizan tres semáforos:
+
+\begin{itemize}
+  \item \texttt{mutex = 1}: protege el acceso al búfer (exclusión mutua).
+  \item \texttt{empty = N}: indica la cantidad de posiciones libres del búfer.
+  \item \texttt{full = 0}: indica la cantidad de posiciones ocupadas.
+\end{itemize}
+
+El productor espera a que exista una posición libre, accede al búfer de forma exclusiva para insertar un elemento y, posteriormente, señala que existe un nuevo elemento disponible.
+
+\begin{ccode}[title=Implementación del productor]
+semaphore mutex = 1;
+semaphore empty = N;
+semaphore full = 0;
+
+void producer() {
+  while (true) {
+    item = produce();
+
+    semWait(empty); // decrementa empty
+    semWait(mutex); // 
+
+    insert(item);
+
+    semSignal(mutex);
+    semSignal(full);
+  }
+}
+\end{ccode}
+
+El consumidor espera hasta que exista al menos un elemento disponible, accede al búfer de forma exclusiva para retirarlo y, finalmente, señala que una posición ha quedado libre.
+
+\begin{ccode}[title=Implementación del consumidor]
+void consumer() {
+  while (true) {
+    semWait(full);
+    semWait(mutex);
+
+    item = remove();
+
+    semSignal(mutex);
+    semSignal(empty);
+
+    consume(item);
+  }
+}
+\end{ccode}
+
+Este algoritmo garantiza que ningún productor escriba sobre un búfer lleno, ningún consumidor lea de un búfer vacío y que nunca dos procesos accedan simultáneamente al búfer compartido.

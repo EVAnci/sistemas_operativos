@@ -1,0 +1,103 @@
+\section{Monitores}
+
+Los \textit{monitores} son una abstracción de alto nivel para sincronización propuesta por Hoare. Proporcionan la misma funcionalidad que los semáforos, pero encapsulan la sincronización dentro de un único módulo, reduciendo la probabilidad de errores.
+
+Un monitor está formado por:
+\begin{itemize}
+  \item Variables privadas, accesibles únicamente desde el monitor.
+  \item Un conjunto de procedimientos que constituyen la única forma de acceder a dichas variables.
+  \item Un mecanismo de exclusión mutua implícito: \textit{solo un proceso puede ejecutar código dentro del monitor a la vez}.
+\end{itemize}
+
+De esta forma, el programador ya no debe implementar explícitamente la exclusión mutua, como ocurre con los semáforos.
+
+\paragraph{Variables de condición}
+
+Además de exclusión mutua, un monitor proporciona sincronización mediante \textit{variables de condición}. Estas únicamente pueden utilizarse dentro del monitor y disponen de dos operaciones:
+
+\begin{itemize}
+  \item \texttt{cwait(c)}: bloquea al proceso sobre la condición \texttt{c} y libera el monitor para que otro proceso pueda entrar.
+  \item \texttt{csignal(c)}: despierta a uno de los procesos bloqueados sobre la condición \texttt{c}. Si ningún proceso está esperando, la señal se pierde.
+\end{itemize}
+
+A diferencia de los semáforos, las señales de un monitor \textit{no se acumulan}: si no existe ningún proceso esperando cuando se ejecuta \texttt{csignal()}, la operación no produce ningún efecto.
+
+\paragraph{Productor-consumidor con monitores}
+
+El siguiente monitor implementa el problema del productor-consumidor utilizando dos variables de condición:
+
+\begin{itemize}
+  \item \texttt{notfull}: indica que existe espacio libre en el búfer.
+  \item \texttt{notempty}: indica que existe al menos un elemento disponible.
+\end{itemize}
+
+El monitor garantiza automáticamente la exclusión mutua, mientras que las operaciones \texttt{cwait()} y \texttt{csignal()} sincronizan productores y consumidores.
+
+\begin{ccode}[title=Métodos y variables del monitor]
+monitor boundedbuffer;
+
+char buffer[N];
+int nextin, nextout;
+int count;
+
+cond notfull, notempty;
+
+void append (char x) {
+  if (count == N) cwait(notfull);  /* 1. ¿Buffer lleno? */
+  buffer[nextin] = x;              /* 2. Guardar dato */
+  nextin = (nextin + 1) % N;       /* 3. Avanzar índice circular */
+  count++;                         /* 4. Un elemento más */
+  csignal (notempty);              /* 5. Avisar al consumidor */
+}
+
+void take (char x) {
+  if (count == 0) cwait(notempty); /* 1. ¿Buffer vacío? */
+  x = buffer[nextout];             /* 2. Leer dato */
+  nextout = (nextout + 1) % N;     /* 3. Avanzar índice circular */
+  count--;                         /* 4. Un elemento menos */
+  csignal (notfull);               /* 5. Avisar al productor */
+}
+/* initialization */
+{
+  nextin = 0;
+  nextout = 0;
+  count = 0;
+}
+\end{ccode}
+\begin{ccode}[title=Productor consumidor usando monitor]
+void producer() {
+  while (true) {
+    char x;
+    produce(x);
+    append(x);
+  }
+}
+void consumer() {
+  while (true) {
+    char x;
+    take(x);
+    consume(x);
+  }
+}
+void main() {
+  parbegin(producer, consumer);
+}
+\end{ccode}
+
+Variables Globales del Monitor:
+\begin{itemize}
+  \item buffer[N]: Arreglo de tamaño N para guardar datos.
+  \item nextin y nextout: Índices para recorrer el arreglo de forma circular (al llegar a \(N-1\), vuelve a 0 gracias al operador módulo \% N).
+  \item count: Cantidad de elementos almacenados en ese instante.
+  \item notfull y notempty: Variables de condición para pausar al productor si el buffer está lleno, o al consumidor si está vacío.
+\end{itemize}
+
+En este ejemplo, solo un proceso a la vez puede estar ejecutando código dentro del monitor (boundedbuffer). No se necesita un semáforo mutex. Si el Productor está dentro de append, el Consumidor no puede entrar a take hasta que el Productor salga (o se bloquee).
+
+Si un productor se bloquea cuando el búfer está lleno y un consumidor cuando está vacío. Cuando el estado del búfer cambia, el proceso correspondiente es despertado mediante \texttt{csignal()}.
+
+\paragraph{Ventajas respecto a los semáforos}
+
+La principal ventaja de los monitores es que la exclusión mutua está integrada en el propio monitor, mientras que el programador únicamente debe indicar las condiciones de espera mediante \texttt{cwait()} y \texttt{csignal()}. Toda la sincronización queda localizada en un único módulo, facilitando la verificación y el mantenimiento del código.
+
+En cambio, con semáforos la exclusión mutua y la sincronización dependen completamente del programador, por lo que es más fácil introducir errores al olvidar ejecutar alguna operación \texttt{semWait()} o \texttt{semSignal()}.

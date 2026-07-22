@@ -1,102 +1,129 @@
 \section{Semáforos}
 
-Los \textbf{semáforos} son un mecanismo de sincronización proporcionado por el sistema operativo para coordinar procesos concurrentes. A diferencia de las soluciones basadas únicamente en instrucciones atómicas, un proceso que no puede continuar queda \textbf{bloqueado}, evitando el \textit{busy waiting}.
+Los \textit{semáforos} son un mecanismo de sincronización proporcionado por el sistema operativo para coordinar procesos concurrentes. A diferencia de las soluciones basadas únicamente en instrucciones atómicas, un proceso que no puede continuar queda \textit{bloqueado}, evitando la \textit{espera activa}.
 
-Un semáforo es una variable entera sobre la que únicamente pueden realizarse tres operaciones:
-
+En términos simples, un semáforo es una variable entera sobre la que únicamente pueden realizarse tres operaciones:
 \begin{itemize}
-    \item Inicialización con un valor entero no negativo.
-    \item \texttt{semWait()} (\textit{P}): decrementa el contador. Si el resultado es negativo, el proceso se bloquea y pasa a una cola de espera.
-    \item \texttt{semSignal()} (\textit{V}): incrementa el contador. Si existen procesos bloqueados, uno de ellos se desbloquea.
+  \item Inicialización con un valor entero no negativo.
+  \item \texttt{semWait()} (\textit{P}): decrementa el contador. Si el resultado es negativo, el proceso se bloquea y pasa a una cola de espera.
+  \item \texttt{semSignal()} (\textit{V}): incrementa el contador. Si existen procesos bloqueados, uno de ellos se desbloquea.
 \end{itemize}
+
+Las operaciones del semáforo deben ejecutarse de forma \textit{atómica}, por lo que el sistema operativo las implementa utilizando instrucciones atómicas provistas por el hardware.
+
+A continuación se analizaran dos tipos de semáforos: el semáforo contador y el semáforo binario. 
+
+El semáforo binario garantiza la exclusión mutua sobre un único recurso indivisible, pero evitando la espera activa anteriormente vista. 
+
+El semáforo contador garantiza el acceso controlado de un número \(n\) de procesos a recursos finitos o unidades de capacidad. Este concepto cobrará sentido al ver el problema del productor--consumidor.
+
+\subsection{Semáforo contador}
+
+El semáforo contador (o semáforo general) es un tipo de semáforo cuyo contador puede tener cualquier valor entero. 
 
 El contador posee el siguiente significado:
-
 \begin{itemize}
-    \item Si es positivo, indica cuántos procesos pueden ejecutar \texttt{semWait()} sin bloquearse.
-    \item Si es cero, el siguiente proceso que ejecute \texttt{semWait()} quedará bloqueado.
-    \item Si es negativo, su valor absoluto representa el número de procesos bloqueados esperando el semáforo.
+  \item Si es positivo, indica cuántos procesos pueden ejecutar \texttt{semWait()} sin bloquearse.
+  \item Si es cero, el siguiente proceso que ejecute \texttt{semWait()} quedará bloqueado.
+  \item Si es negativo, su valor absoluto representa el número de procesos bloqueados esperando el semáforo.
 \end{itemize}
 
-Las operaciones del semáforo deben ejecutarse de forma \textbf{atómica}, por lo que el sistema operativo las implementa utilizando instrucciones atómicas provistas por el hardware.
-
-\begin{ccode}
+\begin{ccode}[title=Definición de primitivas del semáforo]
 struct semaphore {
-    int count;
-    queueType queue;
+  int count;
+  queueType queue;
 };
 
 void semWait(semaphore s) {
-    s.count--;
-    if (s.count < 0) {
-        /* insertar proceso en s.queue */
-        /* bloquear proceso */
-    }
+  s.count--;
+  if (s.count < 0) {
+    /* insertar proceso en s.queue */
+    /* bloquear proceso */
+  }
 }
 
 void semSignal(semaphore s) {
-    s.count++;
-    if (s.count <= 0) {
-        /* despertar un proceso de s.queue */
-    }
+  s.count++;
+  if (s.count <= 0) {
+    /* despertar un proceso de s.queue */
+    /* colocar el proceso en la lista de Listos */
+  }
 }
 \end{ccode}
 
-\paragraph{Semáforos binarios}
+La primitiva \texttt{semWait} intenta adquirir el recurso decrementando \texttt{count} de forma atómica; si tras el decremento \texttt{count < 0}, significa que no hay recursos libres, por lo que el proceso actual se inserta en \texttt{s.queue} y se bloquea. La primitiva \texttt{semSignal} libera el recurso incrementando \texttt{count} de forma atómica; si tras el incremento \texttt{count <= 0}, indica que hay procesos esperando, por lo que se despierta a uno de la cola. De esta forma, un \texttt{count} negativo representa la cantidad de procesos bloqueados en espera.
 
-Un \textbf{semáforo binario} únicamente puede tomar los valores 0 y 1. Su funcionamiento es equivalente al de un semáforo general, pero solamente permite que un proceso posea el recurso simultáneamente.
+\subsection{Semáforos binarios}
 
-\begin{ccode}
+Un \textit{semáforo binario} es aquel cuyo contador puede tomar los valores 0 y 1. Su funcionamiento es equivalente al de un semáforo general, pero solamente permite que un proceso posea el recurso simultáneamente.
+
+\begin{ccode}[title=Definición de primitivas del semáforo binario]
 struct binary_semaphore {
-    enum {zero, one} value;
-    queueType queue;
+  enum {zero, one} value;
+  queueType queue;
 };
 
 void semWaitB(binary_semaphore s) {
-    if (s.value == one)
-        s.value = zero;
-    else {
-        /* bloquear proceso */
-    }
+  if (s.value == one)
+    s.value = zero;
+  else {
+    /* insertar proceso en s.queue */
+    /* bloquear proceso */
+  }
 }
 
 void semSignalB(binary_semaphore s) {
-    if (s.queue is empty())
-        s.value = one;
-    else {
-        /* despertar un proceso */
-    }
+  if (s.queue is empty())
+    s.value = one;
+  else {
+    /* despertar un proceso de s.queue */
+    /* colocar el proceso en la lista de Listos */
+  }
 }
 \end{ccode}
 
-Un \textbf{mutex} es similar a un semáforo binario, pero presenta una diferencia importante: el proceso que adquiere el mutex debe ser el mismo que lo libere. En un semáforo binario, un proceso puede ejecutar \texttt{semWait()} y otro diferente ejecutar \texttt{semSignal()}.
+Visto esto, el semáforo binario es un caso particular del semáforo contador, de esta manera, si el semáforo contador puede hacer todo lo que hace el binario, ¿por qué existe el semáforo binario? Existen razones fundamentales de arquitectura, eficiencia y teoría.
+
+A nivel del procesador (hardware), ejecutar operaciones aritméticas con enteros y comprobar condiciones complejas en memoria de forma atómica (sin interrupciones) es costoso.
+
+Sin embargo, casi todos los procesadores modernos incluyen instrucciones atómicas muy simples orientadas a bits individuales, como Test--And--Set o Compare--And--Swap. Un semáforo binario se adapta perfectamente a estas instrucciones de hardware porque solo requiere cambiar un estado de 0 a 1 o de 1 a 0, haciendo que su implementación en el núcleo del sistema operativo sea extremadamente rápida y con un consumo de memoria mínimo.
+
+Adicionalmente, Edsger Dijkstra (creador de los semáforos), demostró formalmente que un semáforo contador puede ser implementado utilizando únicamente semáforos binarios y variables enteras normales.
+
+Dado que ambos tienen la misma potencia de expresión ---lo que se resuelve con uno, también se puede resolver con el otro---, el semáforo binario se considera la primitiva básica o atómica sobre la cual se pueden construir abstracciones más complejas.
+
+En los sistemas operativos modernos, el concepto de semáforo binario evolucionó hacia el \textit{Mutex} (Mutual Exclusion lock). Aunque parecen lo mismo, el Mutex añade una regla crucial que el semáforo contador no tiene: propiedad (ownership).
+\begin{itemize}
+  \item En un semáforo binario, el proceso A puede hacer \texttt{semWait} y el proceso B puede hacer \texttt{semSignal}.
+  \item En un Mutex, únicamente el proceso que bloqueó el recurso está autorizado a liberarlo.
+\end{itemize}
+Esta restricción del mundo binario permite solucionar problemas graves de sistemas operativos como la inversión de prioridades (mediante protocolos donde el sistema sube la prioridad temporalmente al proceso que tiene el Mutex).
+
 
 \paragraph{Semáforos fuertes y débiles}
 
-Los procesos bloqueados se almacenan en una cola de espera. Si la cola sigue una política FIFO, el semáforo se denomina \textbf{fuerte} (\textit{strong semaphore}) y garantiza ausencia de inanición. Si el orden de desbloqueo no está definido, se denomina \textbf{débil} (\textit{weak semaphore}), pudiendo producirse inanición.
+Los procesos bloqueados se almacenan en una cola de espera. Si la cola sigue una política FIFO, el semáforo se denomina \textit{fuerte} (\textit{strong semaphore}) y garantiza ausencia de inanición. Si el orden de desbloqueo no está definido, se denomina \textit{débil} (\textit{weak semaphore}), pudiendo producirse inanición.
 
-\paragraph{Exclusión mutua con semáforos}
+\subsection{Exclusión mutua con semáforos}
 
-La exclusión mutua puede implementarse inicializando un semáforo binario con valor 1. Antes de entrar en la sección crítica cada proceso ejecuta \texttt{semWait()}, y al salir ejecuta \texttt{semSignal()}. Si otro proceso intenta acceder mientras el semáforo vale 0, quedará bloqueado hasta que el recurso sea liberado.
+La exclusión mutua puede implementarse inicializando un semáforo contador en 1. Cada proceso ejecuta \texttt{semWait(s)} justo antes de su sección crítica y \texttt{semSignal(s)} al salir. El primer proceso que ejecuta \texttt{semWait} encuentra \texttt{s=1}, lo decrementa a 0 y entra. Cualquier otro proceso que intente entrar encontrará \texttt{s <= 0}, por lo que será bloqueado e insertado en \texttt{s.queue}, decrementando el contador a -1, -2, etc. Cuando el proceso dentro de la sección crítica ejecuta \texttt{semSignal}, incrementa el contador y libera a un proceso de la cola, pasándolo a estado Ready para que pueda ser planificado.
 
-\begin{ccode}
-/* program mutualexclusion */
-const int n = /* number of processes */;
+\begin{ccode}[title=Programa de exclusión mutua con semáforo contador]
+const int n = /* número de procesos */;
 semaphore s = 1;
 
 void P(int i) {
-    while (true) {
-        semWait(s);
-
-        /* critical section */
-
-        semSignal(s);
-
-        /* remainder */;
-    }
+  while (true) {
+    semWait(s);
+    /* sección crítica */
+    semSignal(s);
+    /* remainder */;
+  }
 }
 
 void main() {
-    parbegin(P(1), P(2), ..., P(n));
+  parbegin(P(1), P(2), ..., P(n));
 }
 \end{ccode}
+
+De esta forma, el valor del contador se interpreta como: si \texttt{s.count >= 0}, indica cuántos procesos pueden ejecutar \texttt{semWait} sin suspenderse; si \texttt{s.count < 0}, su valor absoluto indica cuántos procesos están suspendidos en la cola. Esta misma lógica permite generalizar el mecanismo inicializando el semáforo en K para permitir hasta K procesos simultáneos, lo que además de exclusión mutua habilita su uso para sincronización.
