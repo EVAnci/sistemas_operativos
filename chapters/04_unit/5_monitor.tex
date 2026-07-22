@@ -33,7 +33,7 @@ El siguiente monitor implementa el problema del productor-consumidor utilizando 
 
 El monitor garantiza automáticamente la exclusión mutua, mientras que las operaciones \texttt{cwait()} y \texttt{csignal()} sincronizan productores y consumidores.
 
-\begin{ccode}[title=Métodos y variables del monitor]
+\begin{ccode}[title=Procedimientos y variables del monitor]
 monitor boundedbuffer;
 
 char buffer[N];
@@ -84,15 +84,15 @@ void main() {
 }
 \end{ccode}
 
-Variables Globales del Monitor:
+A continuación se detalla el uso de las variables globales del monitor:
 \begin{itemize}
-  \item buffer[N]: Arreglo de tamaño N para guardar datos.
-  \item nextin y nextout: Índices para recorrer el arreglo de forma circular (al llegar a \(N-1\), vuelve a 0 gracias al operador módulo \% N).
-  \item count: Cantidad de elementos almacenados en ese instante.
-  \item notfull y notempty: Variables de condición para pausar al productor si el buffer está lleno, o al consumidor si está vacío.
+  \item \texttt{buffer[N]}: arreglo de tamaño N para guardar datos.
+  \item \texttt{nextin} y \texttt{nextout}: índices para recorrer el arreglo (\texttt{buffer[N]}) de forma circular (al llegar a \(N-1\), vuelve a 0 gracias al operador módulo \% N).
+  \item \texttt{count}: cantidad de elementos almacenados en ese instante.
+  \item \texttt{notfull} y \texttt{notempty}: variables de condición para pausar al productor si el buffer está lleno, o al consumidor si está vacío.
 \end{itemize}
 
-En este ejemplo, solo un proceso a la vez puede estar ejecutando código dentro del monitor (boundedbuffer). No se necesita un semáforo mutex. Si el Productor está dentro de append, el Consumidor no puede entrar a take hasta que el Productor salga (o se bloquee).
+En este ejemplo, solo un proceso a la vez puede estar ejecutando código dentro del monitor (boundedbuffer). No se necesita un semáforo mutex. Si el Productor está dentro de \texttt{append}, el Consumidor no puede entrar a \texttt{take} hasta que el Productor salga (o se bloquee).
 
 Si un productor se bloquea cuando el búfer está lleno y un consumidor cuando está vacío. Cuando el estado del búfer cambia, el proceso correspondiente es despertado mediante \texttt{csignal()}.
 
