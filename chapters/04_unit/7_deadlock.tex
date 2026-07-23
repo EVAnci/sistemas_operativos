@@ -411,11 +411,84 @@ Restricciones para su uso:
   \item Ningún proceso puede salir del sistema reteniendo recursos.
 \end{enumerate}
 
+\subsection{Detección de interbloqueos}
 
-% \subsection{Detección de interbloqueo}
+A diferencia de la prevención, la \textit{detección de interbloqueos} no restringe la asignación de recursos. El sistema operativo concede las solicitudes siempre que sea posible y, periódicamente (o tras cada solicitud), ejecuta un algoritmo para comprobar si existe un interbloqueo.
 
-% \subsubsection{Algoritmo de detección de interbloqueo}
+Verificar el estado después de cada solicitud permite detectar el problema rápidamente y simplifica el algoritmo, aunque incrementa el consumo de CPU. Realizar la detección con menor frecuencia reduce dicha sobrecarga, pero retrasa el descubrimiento del interbloqueo.
 
-% \subsubsection{Recuperación}
+\subsubsection{Algoritmo de detección}
 
-% \subsection{Una estrategia integral para el interbloqueo}
+El algoritmo utiliza las siguientes estructuras:
+\begin{itemize}
+  \item \textbf{Recursos asignados} (\(A_{ij}\)): recursos actualmente asignados a cada proceso.
+  \item \textbf{Recursos disponibles} (\(V\)): recursos disponibles de cada tipo.
+  \item \textbf{Recursos solicitados} (\(Q\)): recursos adicionales que cada proceso necesita para finalizar.
+\end{itemize}
+
+Inicialmente, todos los procesos están desmarcados. El algoritmo realiza lo siguiente:
+\begin{enumerate}
+  \item Marcar los procesos cuya fila en \(A_{ij}\) sea completamente cero, ya que no poseen recursos y no pueden formar parte de un interbloqueo.
+  \item Inicializar el vector temporal \(W\) con el contenido de los recursos disponibles \(V\).
+  \item Buscar un proceso no marcado cuya solicitud de recursos sea menor o igual que \(W\):
+    \[
+      Q\leqslant W = V
+    \]
+  \item Si existe, marcarlo, asumir que termina su ejecución y liberar sus recursos:
+  \[
+      W \leftarrow W + A_i
+  \]
+  Luego repetir desde el paso anterior.
+  \item Si no existe ningún proceso que pueda continuar, finalizar el algoritmo.
+\end{enumerate}
+
+Al finalizar:
+\begin{itemize}
+  \item Si todos los procesos quedaron marcados, no existe interbloqueo.
+  \item Si permanecen procesos sin marcar, esos procesos forman el conjunto de procesos interbloqueados.
+\end{itemize}
+
+El algoritmo únicamente determina si el sistema se encuentra actualmente en un estado de interbloqueo; no evita que pueda producirse uno en el futuro.
+
+\subsubsection{Recuperación}
+
+Una vez detectado un interbloqueo, el sistema debe eliminarlo. Las estrategias más comunes son:
+\begin{enumerate}
+  \item \textit{Abortar todos los procesos} involucrados en el interbloqueo. Es la solución más simple y una de las más utilizadas.
+  \item \textit{Restaurar los procesos} a un punto de control previo y reiniciarlos. Requiere mecanismos de \textit{rollback} y el interbloqueo podría repetirse.
+  \item \textit{Abortar procesos de forma selectiva} hasta eliminar el interbloqueo, ejecutando nuevamente el algoritmo de detección después de cada aborto.
+  \item \textit{Expropiar recursos} de algunos procesos y restaurarlos a un estado anterior, repitiendo la detección tras cada expropiación.
+\end{enumerate}
+
+En las estrategias selectivas (3 y 4), la elección del proceso suele basarse en minimizar el costo de recuperación. Algunos criterios posibles son:
+\begin{itemize}
+  \item menor tiempo de CPU consumido;
+  \item menor cantidad de salida producida;
+  \item mayor tiempo estimado restante;
+  \item menor cantidad de recursos asignados;
+  \item menor prioridad.
+\end{itemize}
+
+\subsection{Estrategias para el manejo de interbloqueos}
+
+Ninguna estrategia para tratar los interbloqueos es óptima en todos los casos. Una alternativa consiste en combinar distintas técnicas según el tipo de recurso.
+
+La idea es dividir los recursos en clases y establecer un orden global de asignación entre ellas para evitar esperas circulares. Dentro de cada clase se aplica la estrategia más adecuada.
+
+Un ejemplo de clasificación es:
+\begin{enumerate}
+  \item Espacio de intercambio.
+  \item Recursos de proceso (dispositivos, archivos, etc.).
+  \item Memoria principal.
+  \item Recursos internos del sistema (canales de E/S, estructuras del kernel, etc.).
+\end{enumerate}
+
+Los recursos deben solicitarse siguiendo este orden. Luego, para cada clase, pueden utilizarse distintas estrategias:
+\begin{itemize}
+  \item \textbf{Espacio de intercambio:} prevención mediante asignación simultánea de todos los recursos necesarios (\textit{retención y espera}) o evitación.
+  \item \textbf{Recursos de proceso:} evitación (si los procesos pueden declarar sus necesidades máximas) o prevención mediante ordenamiento de recursos.
+  \item \textbf{Memoria principal:} prevención mediante expropiación, intercambiando procesos a memoria secundaria cuando sea necesario.
+  \item \textbf{Recursos internos:} prevención mediante un orden fijo de adquisición.
+\end{itemize}
+
+Esta estrategia combina las ventajas de los distintos métodos y permite adaptar el manejo de interbloqueos a las características de cada tipo de recurso.
