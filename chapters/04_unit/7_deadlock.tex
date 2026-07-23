@@ -1,0 +1,421 @@
+\section{Bloqueo mutuo}
+
+\subsection{Principios del interbloqueo}
+
+Un \textit{interbloqueo} (\textit{deadlock} o bloqueo mutuo) ocurre cuando un conjunto de procesos queda bloqueado permanentemente porque cada uno espera un evento (generalmente la liberación de un recurso) que únicamente puede ser provocado por otro proceso del mismo conjunto. Como ninguno puede continuar, ninguno libera los recursos que posee.
+
+Todo interbloqueo surge por la competencia entre procesos por recursos compartidos y de acceso exclusivo.
+
+\paragraph{Ejemplo: intersección de cuatro vías}
+
+Suponga una intersección donde cuatro automóviles ingresan simultáneamente desde distintas direcciones (Figura~\ref{fig:interbloqueo}). Cada automóvil necesita ocupar dos cuadrantes para atravesar la intersección.
+\begin{figure}[!ht]
+  \centering
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering 
+    \includegraphics[width=\linewidth]{chapters/04_unit/media/possible_deadlock.pdf}
+    \caption{Posible interbloqueo.}
+  \end{subfigure}
+  \hspace{5mm}
+  \begin{subfigure}[b]{0.45\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{chapters/04_unit/media/deadlock.pdf}
+    \caption{Interbloqueo.}
+  \end{subfigure}
+  \caption{Ilustración del interbloqueo.}
+  \label{fig:interbloqueo}
+\end{figure}
+
+Si todos esperan respetando la prioridad de paso, existe únicamente una \textit{posibilidad} de interbloqueo, ya que cualquiera de ellos podría decidir avanzar.
+
+Sin embargo, si los cuatro vehículos ingresan al mismo tiempo, cada uno ocupa un cuadrante y espera el siguiente, que ya está siendo utilizado por otro automóvil. Ninguno puede continuar ni retroceder, produciéndose un interbloqueo real.
+
+\paragraph{Diagrama de progreso conjunto}
+
+El comportamiento de dos procesos que compiten por recursos puede representarse mediante un \textit{diagrama de progreso conjunto}, donde cada eje representa el avance de uno de los procesos.
+
+Las regiones en las que ambos procesos requieren simultáneamente un mismo recurso corresponden a \textit{regiones prohibidas}, ya que ambos no pueden utilizar el recurso de forma exclusiva al mismo tiempo.
+
+Dentro del diagrama puede aparecer una \textit{región fatal}. Si la ejecución alcanza dicha región, el interbloqueo es inevitable: cada proceso habrá adquirido un recurso mientras espera otro que permanece retenido por el proceso contrario.
+
+
+Para visualizar el diagrama de progreso conjunto, suponga dos procesos (\(P\) y \(Q\)) que compiten por el uso exclusivo de dos recursos (\(A\) y \(B\)). 
+
+Los procesos \(P\) y \(Q\) tienen la siguiente estructura general:
+\begin{center}
+\begin{minipage}{5cm}
+\centering
+\begingroup
+\footnotesize
+\begin{verbatim}
+Proceso P   | Proceso Q
+Obtener A   | Obtener B 
+...         | ... 
+Obtener B   | Obtener A 
+...         | ... 
+Liberar A   | Liberar B 
+...         | ... 
+Liberar B   | Liberar A 
+\end{verbatim}
+\endgroup
+\end{minipage}
+\end{center}
+
+La Figura \ref{fig:diagrama_progreso} ilustra el progreso de dos procesos compitiendo por dos recursos de uso exclusivo. 
+
+\begin{figure}[!ht]
+  \centering 
+  \begin{tikzpicture}[>=Stealth,font=\scriptsize]
+    \draw[gray,->] (0,0) -- (0,7) node[above,text width=1.3cm,align=center] {Progreso de Q};
+    \draw[gray,->] (0,0) -- (9,0) node[right,text width=1.3cm,align=center] {Progreso de P};
+
+    \fill[red!30] (2,1.5) rectangle (4,3.5);
+    \node[text width=2cm, align=center] at (3,2.5) {Interbloqueo inevitable};
+
+    \fill[pattern=north west lines, pattern color=teal!60] (2,3.5) rectangle (6,6.5);
+    \node[align=center,fill=white,rectangle] at (3,4.5) {P y Q\\quieren A};
+
+    \fill[pattern=north east lines, pattern color=orange!60] (4,1.5) rectangle (8,5.5);
+
+    \draw[thick,gray!50!black,dashed] (0,1.5) node[left] {Libera B} -- (9,1.5);
+    \draw[thick,gray!50!black,dashed] (0,3.5) node[left] {Libera A} -- (9,3.5);
+    \draw[thick,gray!50!black,dashed] (0,5.5) node[left] {Obtiene B} -- (9,5.5);
+    \draw[thick,gray!50!black,dashed] (0,6.5) node[left] {Obtiene A} -- (9,6.5);
+    \draw[thick,gray!50!black,dashed] (2,0) node[below] {Obtiene A} -- (2,7);
+    \draw[thick,gray!50!black,dashed] (4,0) node[below] {Obtiene B} -- (4,7);
+    \draw[thick,gray!50!black,dashed] (6,0) node[below] {Libera A} -- (6,7);
+    \draw[thick,gray!50!black,dashed] (8,0) node[below] {Libera B} -- (8,7);
+
+    \node[align=center,fill=white,rectangle] at (6,2.5) {P y Q\\quieren B};
+
+    \draw[thick,->] (0,0) -- (1,0) -- (1,1) -- (8.5,1)node[above]{6};
+    \draw[thick,->] (1.3,1) -- (1.3,6.8) node[above]{1};
+    \draw[thick,->] (1.3,4) -- (2,4) -- (2,6.8) node[above right]{2};
+    \draw[thick,->] (1.3,2) -- node[above]{3} (2.4,2);
+    \draw[thick,->] (3,1) -- node[below right]{4} (3,2);
+    \draw[thick,->] (5,1) -- (5,1.5) -- (8.5,1.5) node[above]{5};
+    \draw[thick,->] (0,-1.5) -- (1,-1.5) node[right] {Posible progreso de procesos P y Q};
+  \end{tikzpicture}
+  \caption{Diagrama de progreso conjunto}
+  \label{fig:diagrama_progreso}
+\end{figure}
+
+Análisis de la figura:
+\begin{itemize}
+  \item \textit{Representación:} El avance de \(P\) se grafica en el eje \(x\) y el de \(Q\) en el eje \(y\). Las zonas donde ambos requieren el mismo recurso son \textit{regiones prohibidas}.
+  \item \textit{Comportamiento:} En un sistema monoprocesador, la trayectoria alterna entre segmentos horizontales (\(P\) ejecuta) y verticales (\(Q\) ejecuta).
+  \item Resultados de las 6 trayectorias posibles:
+  \begin{itemize}
+    \item \textit{Trayectorias 1, 2, 5 y 6:} Exitosas. Un proceso obtiene y libera ambos recursos antes de que el otro avance a necesitarlos.
+    \item \textit{Trayectorias 3 y 4:} Conducen a un interbloqueo inevitable, ya que cada proceso toma un recurso distinto (\(P\) toma \(A\) y \(Q\) toma \(B\), o viceversa) y luego ambos se bloquean esperando el recurso que sostiene el otro.
+  \end{itemize}
+\end{itemize}
+
+Del ejemplo puede concluirse que la existencia de una región fatal depende de la lógica del programa y del orden en que los procesos solicitan y liberan los recursos. Si un proceso libera un recurso antes de solicitar otro, puede eliminarse la posibilidad de interbloqueo, aun cuando ambos procesos compartan los mismos recursos.
+
+\subsubsection{Recursos reutilizables}
+
+Los \textit{recursos reutilizables} son aquellos que pueden ser utilizados por un único proceso a la vez y que, una vez liberados, pueden asignarse nuevamente a otro proceso. Algunos ejemplos son el procesador, la memoria, los dispositivos de E/S, los archivos y las bases de datos.
+
+El interbloqueo ocurre cuando varios procesos retienen recursos mientras esperan la liberación de otros recursos ocupados por procesos diferentes. Un ejemplo típico puede darse durante la asignación de memoria, que consiste en dos procesos que obtienen parte de la memoria disponible y posteriormente solicitan memoria adicional, puede ocurrir que ninguno consiga completar su petición porque la memoria restante es insuficiente y ambos mantienen ocupada la memoria ya asignada.
+
+Estos interbloqueos pueden reducirse imponiendo restricciones sobre el orden en que los procesos solicitan los recursos o, en casos particulares como la memoria principal, mediante mecanismos como la memoria virtual.
+
+\subsubsection{Recursos consumibles}
+
+Los \textit{recursos consumibles} son aquellos que pueden ser creados y destruidos durante la ejecución. A diferencia de los recursos reutilizables, no existe una cantidad fija de instancias: un proceso productor puede generar tantos como sea necesario, y un proceso consumidor los elimina al utilizarlos. Ejemplos de este tipo de recursos son las interrupciones, las señales, los mensajes y la información contenida en búferes de E/S.
+
+También pueden producirse interbloqueos con recursos consumibles. Por ejemplo, si dos procesos ejecutan primero una operación bloqueante (por ejemplo \texttt{Receive()}) esperando un mensaje del otro y solo después realizan \texttt{Send()}, ambos permanecerán bloqueados indefinidamente. Este tipo de interbloqueo suele deberse a errores de diseño, que pueden ser difíciles de detectar y manifestarse únicamente bajo combinaciones poco frecuentes de eventos.
+
+No existe una estrategia única para resolver todos los interbloqueos. Las técnicas más utilizadas son:
+\begin{itemize}
+  \item \textit{Prevención:} impedir que se cumpla alguna de las condiciones necesarias para que ocurra un interbloqueo (espera circular).
+  \item \textit{Predicción o Evitación:} conceder un recurso solo si la asignación no puede conducir a un interbloqueo.
+  \item \textit{Detección:} permitir las asignaciones de recursos y comprobar periódicamente si existe un interbloqueo para luego recuperarse de él.
+\end{itemize}
+
+\subsubsection{Grafos de asignación de recursos}
+
+Los \textit{grafos de asignación de recursos} representan el estado de asignación de recursos en un sistema mediante un grafo dirigido.
+
+\begin{figure}[!ht]
+  \centering
+  \begin{subfigure}[c]{0.3\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{chapters/04_unit/media/graph1.pdf}
+    \caption{Recurso solicitado.}
+  \end{subfigure}
+  \hspace{1cm}
+  \begin{subfigure}[c]{0.3\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{chapters/04_unit/media/graph2.pdf}
+    \caption{Recurso adquirido.}
+  \end{subfigure}
+
+  \vspace{5mm}
+  
+  \begin{subfigure}[c]{0.33\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{chapters/04_unit/media/graph3.pdf}
+    \caption{Espera circular.}
+  \end{subfigure}
+  \hspace{1cm}
+  \begin{subfigure}[c]{0.33\textwidth}
+    \centering
+    \includegraphics[width=\linewidth]{chapters/04_unit/media/graph4.pdf}
+    \caption{Sin interbloqueo.}
+  \end{subfigure}
+  \caption{Ejemplos de grafos de asignación de recursos.}
+  \label{fig:resource_graphs}
+\end{figure}
+
+En el grafo (Figura \ref{fig:resource_graphs}):
+\begin{itemize}
+  \item Cada proceso y cada tipo de recurso se representan mediante un nodo.
+  \item Una arista de un proceso hacia un recurso indica una solicitud pendiente.
+  \item Una arista desde una instancia de un recurso reutilizable hacia un proceso indica que el recurso ha sido asignado.
+  \item En recursos consumibles, una arista desde el recurso hacia un proceso indica que dicho proceso produjo ese recurso.
+  \item Cada punto dentro del nodo de un recurso representa una instancia disponible de ese recurso.
+\end{itemize}
+
+Estos grafos permiten visualizar posibles interbloqueos. Si existe un ciclo donde cada proceso espera un recurso retenido por otro proceso, puede producirse un interbloqueo. Sin embargo, la existencia de un ciclo no siempre implica interbloqueo: si un recurso posee múltiples instancias disponibles, el ciclo puede resolverse mediante una nueva asignación.
+
+\subsubsection{Condiciones para el interbloqueo}
+
+Para que un interbloqueo sea posible, deben cumplirse simultáneamente las siguientes condiciones:
+\begin{enumerate}
+  \item Exclusión mutua: cada recurso solo puede ser utilizado por un proceso a la vez.
+  \item Retención y espera: un proceso puede conservar los recursos que posee mientras espera la asignación de otros.
+  \item No apropiación: los recursos no pueden ser retirados por la fuerza al proceso que los posee; deben liberarse voluntariamente.
+  \item Espera circular: existe una cadena cerrada de procesos en la que cada uno espera un recurso retenido por el otro.
+\end{enumerate}
+
+Las tres primeras condiciones son necesarias para que un interbloqueo sea posible, pero no garantizan su existencia. El interbloqueo ocurre únicamente cuando además aparece una espera circular. Por tanto, las cuatro condiciones juntas son \textit{necesarias y suficientes} para que exista un interbloqueo.
+
+Las condiciones anteriores son, en muchos casos, deseables. Por ejemplo, la exclusión mutua garantiza la consistencia de los datos y la no apropiación evita retirar recursos de forma arbitraria, lo que podría requerir mecanismos adicionales de recuperación.
+
+Desde la perspectiva del diagrama de progreso conjunto, las tres primeras condiciones permiten la existencia de una \textit{región fatal}, es decir, una región del espacio de ejecución desde la cual el sistema inevitablemente terminará en un interbloqueo. La cuarta condición corresponde a la secuencia de eventos que lleva a los procesos a entrar en dicha región.
+
+\begin{center}
+\begin{tabular}{cc}
+\textit{Posibilidad de interbloqueo} & \textit{Existencia de interbloqueo} \\
+\hline
+Exclusión mutua & Exclusión mutua \\
+No apropiación & No apropiación \\
+Retención y espera & Retención y espera \\
+ & Espera circular 
+\end{tabular}
+\end{center}
+
+\subsection{Prevención de interbloqueo}
+
+La prevención de interbloqueos consiste en diseñar el sistema de manera que el interbloqueo sea imposible. Esto puede lograrse eliminando alguna de las condiciones necesarias para su ocurrencia o impidiendo la aparición de una espera circular.
+
+\paragraph{Retención y espera}
+Se evita obligando a que un proceso solicite todos los recursos que necesitará antes de comenzar su ejecución. El proceso permanece bloqueado hasta que todos los recursos puedan asignarse simultáneamente.
+
+Esta estrategia presenta varias desventajas:
+\begin{itemize}
+  \item Disminuye la utilización de los recursos, ya que algunos pueden permanecer asignados sin utilizarse.
+  \item Reduce el paralelismo, pues un proceso puede esperar por recursos que todavía no necesita.
+  \item En muchos casos es imposible conocer de antemano todos los recursos que serán requeridos, especialmente en programas modulares o multihilo.
+\end{itemize}
+
+\paragraph{No expropiación}
+Se evita permitiendo que el sistema operativo retire recursos a un proceso cuando no puede satisfacer una nueva solicitud. El proceso deberá liberar los recursos que posee y solicitarlos nuevamente más adelante.
+
+Este método solo es práctico para recursos cuyo estado puede guardarse y restaurarse fácilmente, como el procesador, pero no para recursos cuyo estado no puede recuperarse de forma sencilla.
+
+\paragraph{Espera circular}
+Se evita imponiendo un orden total entre los tipos de recursos. Un proceso solo puede solicitar recursos que aparezcan después de los que ya posee en dicho orden. De esta forma se elimina la posibilidad de formar ciclos de espera.
+
+Para ilustrar este concepto, supóngase que el sistema asigna un identificador numérico único a cada tipo de recurso:
+\begin{itemize}
+  \item \texttt{Recurso 1}: Cámara
+  \item \texttt{Recurso 2}: Micrófono
+  \item \texttt{Recurso 3}: Impresora
+\end{itemize}
+
+Bajo esta estricta política, todos los procesos están obligados a solicitar los recursos en orden ascendente (\(1 \rightarrow 2 \rightarrow 3\)). Si un programa ya tiene asignada la cámara, tiene permitido pedir el micrófono. Sin embargo, si un programa ya retiene el micrófono, el sistema no le permitirá solicitar la cámara. Esto garantiza que el ciclo de dependencias nunca pueda cerrarse sobre sí mismo.
+
+Al igual que la prevención de \textit{Retención y espera}, esta estrategia puede disminuir el rendimiento al obligar a los procesos a seguir un orden de adquisición que no siempre es el más eficiente.
+
+\paragraph{Exclusión Mutua}
+En general, esta condición no puede eliminarse, ya que muchos recursos requieren acceso exclusivo para garantizar la consistencia de los datos. Por ello, normalmente no se considera una estrategia práctica de prevención de interbloqueos.
+
+\subsection{Predicción de interbloqueo}
+
+La evitación (o predicción) de interbloqueos no elimina las condiciones necesarias del interbloqueo; en cambio, decide dinámicamente si una solicitud de recursos puede conducir a un estado inseguro. Si existe riesgo de interbloqueo, la solicitud se rechaza o se pospone.
+
+A diferencia de la prevención, esta estrategia permite un mayor grado de concurrencia, pero requiere conocer de antemano las necesidades máximas de recursos de cada proceso.
+
+Existen dos enfoques principales:
+\begin{enumerate}
+  \item \textit{Denegación del inicio de procesos:} un proceso solo se inicia si el sistema dispone de suficientes recursos para satisfacer, en el peor caso, las necesidades máximas de todos los procesos activos. Este método es conservador y puede desaprovechar recursos al asumir que todos los procesos solicitarán simultáneamente su máximo requerimiento.
+
+  \item \textit{Denegación de asignación de recursos:} una solicitud de recursos se concede únicamente si, tras la asignación, el sistema permanece en un estado seguro y existe al menos una secuencia de ejecución que permita finalizar todos los procesos sin producir un interbloqueo.
+\end{enumerate}
+
+La evitación de interbloqueos constituye la base de algoritmos como el \textit{algoritmo del banquero}, que determina si una asignación mantiene al sistema en un estado seguro.
+
+\subsubsection{Denegación del inicio de procesos}
+
+Antes de poder introducir el algoritmo del banquero, considérese un sistema con \(n\) procesos y \(m\) tipos de recursos. Se definen las siguientes cantidades:
+\begin{itemize}
+  \item \(R=(R_1,\dots,R_m)\): cantidad total de cada tipo de recurso.
+  \item \(V=(V_1,\dots,V_m)\): recursos actualmente disponibles.
+  \item \(C_{ij}\): demanda máxima del proceso \(i\) para el recurso \(j\).
+  \item \(A_{ij}\): cantidad actualmente asignada al proceso \(i\) del recurso \(j\).
+\end{itemize}
+
+Estas estructuras cumplen:
+\begin{gather*}
+R_j = V_j + \sum_{i=1}^{n} A_{ij},\quad
+C_{ij} \le R_j,
+\quad
+A_{ij} \le C_{ij}.
+\end{gather*}
+La política consiste en iniciar un nuevo proceso únicamente si el sistema puede satisfacer, en el peor caso, las demandas máximas de todos los procesos:
+\[
+R_j \ge C_{(n+1)j} + \sum_{i=1}^{n} C_{ij},
+\quad \forall j.
+\]
+Como antes se dijo, este método es muy conservador, ya que supone que todos los procesos solicitarán simultáneamente su demanda máxima, lo que reduce el aprovechamiento de los recursos.
+
+\subsubsection{Denegación de asignación de recursos}
+
+Un \textit{estado seguro} es aquel donde existe al menos una secuencia de ejecución de todos los procesos que no lleva a interbloqueo. Un \textit{estado inseguro} es el que no es seguro. Inseguro no implica interbloqueo, solo la posibilidad de que ocurra.
+
+Condición para que el proceso \(P_i\) pueda completarse con los recursos disponibles:
+\begin{equation}
+C_{ij} - A_{ij} \leq V_j, \quad \forall j
+\end{equation}
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\textwidth]{chapters/04_unit/media/safe_state.pdf}
+  \caption{Determinación del estado seguro.}
+  \label{fig:safe_state}
+\end{figure}
+
+Para visualizar la determinación de un estado seguro, considere el ejemplo de la Figura \ref{fig:safe_state}a, donde hay 4 procesos y 3 tipos de recursos: \(R1=9, R2=3, R3=6\). Quedan libres \(1\) de \(R2\) y \(1\) de \(R3\).
+\begin{enumerate}
+  \item \(P1\), \(P_3\) y \(P_4\) no pueden completarse. \(P2\) sí puede si se le asigna \(1\) unidad de \(R3\).
+  \item Se ejecuta \(P2\) y libera sus recursos. Estado \ref{fig:safe_state}b.
+  \item Ahora \(P1\) puede completarse. Al terminar libera todo. Estado \ref{fig:safe_state}c.
+  \item Luego se completan \(P3\) y \(P4\). Al existir la secuencia \[P2 \rightarrow P1 \rightarrow P3 \rightarrow P4\]el estado \ref{fig:safe_state}a es seguro.
+\end{enumerate}
+
+Ahora observe la Figura \ref{fig:unsafe_state}, donde se determinará un estado inseguro. Primero se evalúan solicitudes. En este caso \(P2\) puede pedir \(1\) de \(R1\) y \(2\) de \(R3\), el estado resultante es equivalente al de la Figura \ref{fig:safe_state}a, como hay recursos disponibles y puede completarse y se considera un estado seguro.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\textwidth]{chapters/04_unit/media/unsafe_state.pdf}
+  \caption{Determinación de un estado inseguro.}
+  \label{fig:unsafe_state}
+\end{figure}
+
+Sin embargo, suponga que en ese instante \(P1\) pide \(1\) de \(R1\) y \(1\) de \(R3\). Como hay recursos disponibles se concede, el estado resultante es \ref{fig:unsafe_state}b. Como cada proceso necesita al menos \(1\) unidad adicional de \(R1\) y no hay ninguna libre, es un estado inseguro, por lo que la petición se deniega y \(P1\) se bloquea, aunque aún no hay interbloqueo.
+
+El algoritmo no predice el interbloqueo con certeza, solo evita la posibilidad.
+
+\subsubsection{Algoritmo del banquero}
+
+\begin{ccode}[title=Algoritmo del banquero]
+/* estructura de datos (estado) */
+struct state {
+  int resource[m];
+  int available[m];
+  int claim[n][m];
+  int alloc[n][m];
+}
+
+/* Algoritmo de asignación de recursos */ 
+if (alloc [i,*] + request [*] > claim [i,*])
+  <error>;  // total request > claim 
+else if (request [*] > available [*])
+  <suspend process>;
+else { // simula asignación
+  <define newstate by:
+   alloc [i,*] = alloc [i,*] + request [*];
+   available [*] = available [*] - request [*]>;
+}
+if (safe (newstate))
+  <carry out allocation>;
+else {
+  <restore original state>;
+  <suspend process>;
+}
+
+/* Algoritmo del banquero (prueba de estado seguro) */
+boolean safe (state S) {
+  int currentavail[m];
+  process rest[<number of processes>];
+  currentavail = available;
+  rest = {all processes};
+  possible = true;
+  while (possible) {
+    <find a process Pk in rest such that
+    claim [k,*] – alloc [k,*]<= currentavail;
+    if (found) {
+    /* simula ejecución de Pk */
+      currentavail = currentavail + alloc [k,*];
+      rest = rest - {Pk};
+    } else possible = false; 
+  }
+  return (rest == null);
+}
+\end{ccode}
+
+\paragraph{Estructura de datos}
+Para que el algoritmo funcione, el sistema operativo (el ``banquero'') necesita conocer el estado exacto de todos los recursos y procesos:
+\begin{itemize}
+  \item \texttt{resource} (\(R\)): La cantidad total que existe de cada tipo de recurso en el sistema.
+  \item \texttt{available} (\(V\)): Los recursos que están libres y listos para usarse en este momento.
+  \item \texttt{claim} (\(C\)): La cantidad máxima de recursos que un proceso declara que utilizará.
+  \item \texttt{alloc} (\(A\)): Los recursos que un proceso ya tiene asignados actualmente.
+\end{itemize}
+La estructura \texttt{state} declara justamente esto, el tipo de dato estado.
+
+\paragraph{Algoritmo de asignación}
+Cuando un proceso pide recursos, el sistema no se los da inmediatamente. Primero realiza una serie de comprobaciones lógicas:
+\begin{enumerate}
+  \item Sobre \texttt{claim}: Verifica que la petición no supere el máximo que el proceso dijo que iba a necesitar (\texttt{alloc + request > claim}). Si lo supera, lanza un error porque el programa está pidiendo más de lo permitido.
+  \item Disponibilidad: Comprueba si hay suficientes recursos libres en este momento (\texttt{request > available}). Si no los hay, el proceso se suspende y debe esperar.
+  \item La simulación: Si todo parece correcto, el sistema simula qué pasaría si entregara los recursos. Crea un estado temporal (\texttt{newstate}) restando lo solicitado de \texttt{available} y sumándolo a \texttt{alloc}.
+  \item El sistema evalúa ese estado temporal con la función \texttt{safe()}. Si el resultado es seguro, la asignación se hace real. Si no es seguro, se deshace la simulación y el proceso se pone en espera para evitar un futuro interbloqueo.
+\end{enumerate}
+
+\paragraph{Algoritmo de prueba de estado seguro}
+La función \texttt{safe()} es la parte más importante del algoritmo. Su objetivo es responder a una pregunta: si apruebo esta solicitud, ¿existe al menos una forma de garantizar que todos los procesos podrán terminar sus tareas?
+
+Para descubrirlo, hace lo siguiente:
+\begin{enumerate}
+  \item Crea una variable \texttt{currentavail} con los recursos disponibles y una lista \texttt{rest} con todos los procesos que aún no han terminado.
+  \item Entra en un bucle \texttt{while} buscando un proceso cuyas necesidades pendientes (\texttt{claim - alloc}) puedan ser cubiertas únicamente con lo que hay en \texttt{currentavail}.
+  \item Si encuentra uno: Significa que este proceso tiene lo necesario para terminar. El sistema simula que el proceso finaliza con éxito y devuelve todos los recursos que tenía retenidos, sumándolos a \texttt{currentavail}. Luego, lo retira de la lista \texttt{rest}.
+  \item Este ciclo se repite; con los nuevos recursos devueltos, el sistema busca si ahora puede satisfacer a otro proceso de la lista, y así sucesivamente.
+  \item El bucle termina cuando ya no hay más procesos que puedan avanzar. Si la lista \texttt{rest} queda vacía (\texttt{rest == null}), el estado es seguro porque se encontró una secuencia exitosa para todos. Si quedan procesos atrapados en la lista, el estado es inseguro y la petición original debe ser denegada.
+\end{enumerate}
+
+En términos simples el algoritmo realiza el mismo procedimiento que se realizó en la Figura \ref{fig:safe_state} para determinar un estado seguro. 
+
+\paragraph{Ventajas y desventajas}
+Ventajas: no requiere quitar y revertir procesos como en la detección (se verá a continuación), y es menos restrictivo que la prevención.
+
+Restricciones para su uso:
+\begin{enumerate}
+  \item La demanda máxima de cada proceso debe conocerse de antemano.
+  \item Los procesos deben ser independientes, sin requisitos de sincronización que impongan un orden.
+  \item El número de recursos debe ser fijo.
+  \item Ningún proceso puede salir del sistema reteniendo recursos.
+\end{enumerate}
+
+
+% \subsection{Detección de interbloqueo}
+
+% \subsubsection{Algoritmo de detección de interbloqueo}
+
+% \subsubsection{Recuperación}
+
+% \subsection{Una estrategia integral para el interbloqueo}

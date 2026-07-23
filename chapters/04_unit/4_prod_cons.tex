@@ -30,12 +30,12 @@ void producer() {
     item = produce();
 
     semWait(empty); // decrementa empty
-    semWait(mutex); // 
+    semWait(mutex); // decrementa mutex
 
     insert(item);
 
-    semSignal(mutex);
-    semSignal(full);
+    semSignal(mutex); // incrementa mutex
+    semSignal(full); // incrementa full
   }
 }
 \end{ccode}
@@ -45,13 +45,13 @@ El consumidor espera hasta que exista al menos un elemento disponible, accede al
 \begin{ccode}[title=Implementación del consumidor]
 void consumer() {
   while (true) {
-    semWait(full);
-    semWait(mutex);
+    semWait(full); // decrementa full
+    semWait(mutex); // decrementa mutex
 
     item = remove();
 
-    semSignal(mutex);
-    semSignal(empty);
+    semSignal(mutex); // incrementa mutex
+    semSignal(empty); // incrementa empty
 
     consume(item);
   }
