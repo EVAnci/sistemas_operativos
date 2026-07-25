@@ -1,0 +1,87 @@
+\section{Requisitos de la administración de memoria}
+
+Un sistema de administración de memoria debe satisfacer los siguientes requisitos:
+\begin{enumerate}
+  \item Reubicación.
+  \item Protección.
+  \item Compartición.
+  \item Organización lógica.
+  \item Organización física.
+\end{enumerate}
+
+\subsection{Reubicación}
+
+En un sistema multiprogramado, un proceso puede cargarse en cualquier región de memoria e incluso ser trasladado durante su ejecución (por ejemplo, mediante \textit{swapping}). Por ello, las direcciones utilizadas por el programa no pueden corresponder directamente a direcciones físicas.
+
+\begin{figure}[!ht]
+  \centering
+  \begin{tikzpicture}[>=Stealth,font=\scriptsize]
+    \fill[fill=gray!20] (0.1,-0.1) rectangle (2.1,5.4);
+    \draw[fill=white!94!blue!93!green] (0,0) rectangle node{Pila} (2,1);
+    \draw[fill=white!94!blue!93!green] (0,1) rectangle node{Datos} (2,3);
+    \draw[fill=white!94!blue!93!green] (0,3) rectangle node{Programa} (2,5);
+    \draw[fill=white!94!blue!93!green] (0,5) rectangle node{PCB} (2,5.5);
+    \draw[->] (1.7,4.7) -- (2.6,4.7) -- node[right,text width=1.4cm]{Instrucción de salto} ++(0,-.7) -- (2,4);
+    \draw[->] (1.7,3.4) -- (2.6,3.4) -- node[right,text width=1.4cm]{Referencia a datos} ++(0,-1) -- (2,2.4);
+    \draw[<-] (0,1) -- ++(-.7,0) node[left,text width=2cm,draw,rectangle]{Cima actual de la pila};
+    \draw[<-] (0,5) -- ++(-.7,0) node[below left,text width=2.3cm,draw,rectangle]{Punto de entrada del programa};
+    \draw[<-] (0,5.5) -- ++(-.7,0) node[above left,text width=2.3cm,draw,rectangle]{Bloque de control de proceso};
+    \draw[thick,->] (-1,3.5) --node[left,text width=2cm]{Incremento de direcciones} (-1,2.5);
+  \end{tikzpicture}
+  \caption{Requisitos de direccionamiento de un proceso.}
+  \label{fig:direccionamiento_proceso}
+\end{figure}
+
+La figura \ref{fig:direccionamiento_proceso} muestra una imagen de un proceso. Para simplificar, supongamos que dicha imagen ocupa una región contigua de la memoria principal. El sistema operativo necesita conocer la ubicación del PCB y de la pila de ejecución, además del punto de entrada para comenzar la ejecución del programa de ese proceso. Como el sistema operativo administra la memoria y se encarga de traer el proceso a la memoria principal, estas direcciones son fáciles de obtener.
+
+Además, el procesador debe manejar las referencias a memoria dentro del programa: las instrucciones de salto incluyen una dirección de la siguiente instrucción a ejecutar; y las instrucciones de acceso a datos contienen la dirección del byte o palabra de datos referenciado. 
+
+De alguna manera, el hardware y el sistema operativo deben traducir las referencias a memoria que aparecen en el código del programa a direcciones físicas reales, reflejando la ubicación actual del programa en la memoria principal, permitiendo que el proceso se ejecute independientemente de su ubicación en memoria.
+
+\subsection{Protección}
+
+Cada proceso debe estar aislado de los demás para impedir accesos no autorizados, ya sean accidentales o maliciosos. En particular:
+\begin{itemize}
+  \item Un proceso no debe acceder a la memoria de otro proceso.
+  \item Los procesos de usuario no pueden acceder directamente a la memoria del sistema operativo.
+  \item No se permite ejecutar instrucciones pertenecientes a otro proceso.
+\end{itemize}
+
+Como las referencias a memoria se generan dinámicamente durante la ejecución, la protección debe implementarse mediante \textit{hardware}, verificando cada acceso en tiempo de ejecución.
+
+\subsection{Compartición}
+
+Además de proteger la memoria, el sistema debe permitir que varios procesos compartan regiones comunes cuando sea necesario.
+
+Por ejemplo:
+\begin{itemize}
+  \item varios procesos pueden compartir una única copia de un mismo programa;
+  \item procesos cooperativos pueden compartir estructuras de datos.
+\end{itemize}
+
+El acceso compartido debe realizarse de forma controlada, sin comprometer la protección entre procesos.
+
+\subsection{Organización lógica}
+
+Aunque la memoria física es un espacio lineal de direcciones, los programas suelen organizarse en \textit{módulos} independientes (código, bibliotecas, datos, etc.).
+
+Trabajar con módulos ofrece varias ventajas:
+\begin{itemize}
+  \item compilación independiente de cada módulo;
+  \item distintos permisos de acceso (solo lectura, ejecución, lectura/escritura);
+  \item posibilidad de compartir módulos entre procesos.
+\end{itemize}
+
+La técnica de administración de memoria que mejor soporta esta organización es la \textit{segmentación}.
+
+\subsection{Organización física}
+
+La memoria se organiza en dos niveles:
+\begin{itemize}
+  \item \textit{Memoria principal}: rápida, costosa y volátil.
+  \item \textit{Memoria secundaria}: más lenta, económica y no volátil.
+\end{itemize}
+
+El sistema operativo es responsable de mover programas y datos entre ambos niveles según sea necesario. Delegar esta tarea al programador (por ejemplo, mediante \textit{overlays}) resulta complejo e impráctico, especialmente en sistemas multiprogramados donde la memoria disponible cambia continuamente.
+
+La gestión automática de este movimiento constituye una de las funciones fundamentales de la administración de memoria.
