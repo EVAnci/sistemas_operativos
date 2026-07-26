@@ -1,0 +1,152 @@
+\section{Memoria Virtual}
+
+\subparagraph{Memoria virtual} Un esquema de asignación de almacenamiento en el cual la memoria secundaria se puede direccionar como si fuera parte de la memoria principal. Las direcciones que un programa puede utilizar para hacer referencia a la memoria se distinguen de las direcciones que el sistema de memoria usa para identificar ubicaciones físicas de almacenamiento, y las direcciones generadas por el programa se traducen automáticamente a las direcciones de máquina correspondientes. El tamaño del almacenamiento virtual está limitado por el esquema de direccionamiento del sistema informático y por la cantidad de memoria secundaria disponible, no por el número real de ubicaciones en el almacenamiento principal.
+
+\subparagraph{Dirección virtual} La dirección asignada a una ubicación en la memoria virtual para permitir que se acceda a dicha ubicación como si formara parte de la memoria principal.
+
+\subparagraph{Espacio de direcciones virtuales} El almacenamiento virtual asignado a un proceso.
+
+\subparagraph{Espacio de direcciones} El rango de direcciones de memoria disponibles para un proceso.
+
+\subparagraph{Dirección real / Dirección física} La dirección de una ubicación de almacenamiento en la memoria principal.
+
+\subsection{Hardware y estructuras de control}
+
+Comparada con el particionado fijo y dinámico, la paginación y segmentación simple aportan dos avances importantes: 
+\begin{enumerate}
+  \item Traducción dinámica de direcciones: todas las referencias son lógicas y se traducen a físicas en tiempo de ejecución. Un proceso puede entrar y salir de memoria y ocupar regiones diferentes cada vez.
+  \item Carga no contigua: un proceso se divide en piezas (páginas o segmentos) que no necesitan estar contiguas en memoria gracias a la tabla de páginas/segmentos.
+\end{enumerate}
+
+Lo interesante de esto es que no hace falta cargar todo el proceso. Si la pieza con la próxima instrucción y la que tiene el dato a acceder están en memoria principal, la ejecución puede continuar.
+
+Funciona de la siguiente manera: al traer un proceso nuevo, el SO carga solo una o pocas piezas iniciales. El conjunto de piezas que realmente está en memoria en un momento dado se llama \emph{conjunto residente}.
+
+Mientras todas las referencias caigan dentro del conjunto residente, todo va bien. Si el procesador encuentra una dirección lógica que no está en memoria, genera una interrupción por fallo de acceso a memoria (memory fault). El SO bloquea el proceso, emite una lectura de disco para traer la pieza faltante y despacha otro proceso mientras espera. Cuando llega por E/S, el proceso vuelve a estado Listo.
+
+¿No es ineficiente? Puede parecerlo, pero es eficiente si se gestiona bien.
+
+Esto tiene dos implicaciones fundamentales:
+\begin{enumerate}
+  \item Más procesos en memoria: al cargar solo parte de cada uno, caben más. Aumenta la probabilidad de que siempre haya un proceso en estado Listo y mejora el uso del procesador.
+  \item Procesos más grandes que la memoria física: se levanta la restricción más básica de la programación. El programador ya no necesita hacer overlays manuales. Ve una memoria enorme (del tamaño del disco) y es el SO quien trae las piezas bajo demanda.
+\end{enumerate}
+
+Como un proceso se ejecuta únicamente si está en memoria principal, también se le llama memoria real. Pero la que percibe el programador, alojada en disco, es la \emph{memoria virtual}. Esto permite multiprogramación muy efectiva y libera al usuario de las limitaciones de la memoria física.
+
+\subsection{Localidad y memoria virtual}
+
+Los beneficios de la memoria virtual son claros, pero ¿es práctica? La experiencia demostró que sí, y hoy es un componente esencial de los SO modernos.
+
+La clave está en esto: un proceso grande tiene mucho código y datos, pero en un intervalo corto la ejecución se concentra en una pequeña sección (ej: una subrutina) y en uno o dos arreglos. Sería un desperdicio cargar decenas de piezas cuando solo se usarán unas pocas.
+
+Pero el SO debe ser inteligente. En estado estable, casi toda la memoria está ocupada, así que para traer una pieza debe expulsar otra. Si expulsa una que se necesitará enseguida, tendrá que traerla de vuelta al momento. El exceso de esto provoca \emph{thrashing} (hiperpaginación): el sistema pasa más tiempo intercambiando que ejecutando.
+
+Evitar la hiperpaginación fue un gran tema de investigación en los 70 y llevó a algoritmos que, basados en la historia reciente, intentan adivinar qué piezas tienen menos probabilidad de usarse pronto.
+
+Todo esto se basa en el principio de localidad: las referencias a programas y datos tienden a agruparse. Por eso es válido suponer que solo unas pocas piezas se necesitarán a corto plazo y se puede predecir cuáles.
+
+Para que la memoria virtual sea efectiva se necesitan dos cosas:
+\begin{enumerate}
+  \item Soporte de hardware para paginación y/o segmentación.
+  \item Software del SO para gestionar el movimiento de páginas/segmentos entre memoria secundaria y principal.
+\end{enumerate}
+
+\subsection{Paginación con memoria virtual}
+
+El término memoria virtual suele asociarse a paginación. Con paginación simple, toda la memoria se divide en marcos del mismo tamaño y el proceso en páginas iguales, y se cargan todas las páginas en marcos no necesariamente contiguos. En paginación virtual, el principio es el mismo, pero no es necesario cargar todas las páginas para ejecutar.
+
+Cada proceso sigue teniendo su propia tabla de páginas, pero las entradas (PTE - Page Table Entry) son más complejas:
+\begin{itemize}
+  \item Bit de presencia (P): indica si la página está o no en memoria principal. Si está, la entrada contiene el número de marco.
+  \item Bit de modificación (M): indica si la página fue modificada desde que se cargó. Si no fue modificada, no hace falta escribirla a disco al reemplazarla.
+  \item Otros bits de control (protección, compartición, etc.).
+\end{itemize}
+
+\subsubsection{Estructura de la tabla de páginas}
+
+El mecanismo básico para leer una palabra de la memoria implica la traducción de una dirección virtual (o lógica) ---compuesta por un número de página y un desplazamiento--- a una dirección física ---compuesta por un número de marco y un desplazamiento--- utilizando una tabla de páginas. Dado que la tabla de páginas tiene una longitud variable según el tamaño del proceso, no se puede mantener en registros. En su lugar, debe estar ubicada en la memoria principal para ser accedida.
+
+La traducción es: 
+\begin{center}
+ \texttt{dirección virtual \(\rightarrow\) dirección física}\\
+(\(n^\circ\) página + offset) ~\(\quad\) (\(n^\circ\) marco + offset)
+\end{center}
+Como la tabla es de longitud variable, debe estar en memoria principal, no en registros. Un registro guarda la dirección de inicio de la tabla del proceso en ejecución. El número de página indexa la tabla para hallar el marco.
+
+Además del número de marco, cada entrada de la tabla de páginas contiene información de control fundamental para la gestión de la memoria virtual:
+\begin{itemize}
+  \item \textit{Bit de presencia:} indica si la página está o no en la memoria principal.
+  \item \textit{Bit de modificación:} indica si la página ha sido modificada desde la última vez que fue cargada en memoria. Si no ha habido cambio, la página no necesita escribirse en el disco cuando se quita de memoria principal.
+\end{itemize}
+
+Normalmente hay una tabla por proceso, pero pueden ser enormes. Por ejemplo: con 2GB de memoria virtual y páginas de 512 bytes, se necesitan \(2^{22}\) entradas. Ocuparía demasiada memoria. La solución es guardar las propias tablas de páginas en memoria virtual, por lo que también se paginan. Cuando un proceso corre, al menos la parte de su tabla que contiene la página en ejecución debe estar en memoria real.
+
+Para manejar tablas grandes se usa el esquema de dos niveles: un directorio de páginas. Cada entrada del directorio apunta a una tabla de páginas. Si el directorio tiene \(X\) entradas y cada tabla \(Y\) entradas, el proceso puede tener hasta \(X \times Y\) páginas. Normalmente cada tabla ocupa como máximo una página.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.9\textwidth]{chapters/05_unit/media/dirs_virtual_mem.pdf}
+  \caption{Esquema de dos niveles.}
+  \label{fig:dirs_virtual_mem}
+\end{figure}
+
+Ejemplo de 32 bits con páginas de 4KB (\(2^{12}\)) (Figura~\ref{fig:dirs_virtual_mem}): el espacio virtual de 4GB (\(2^{32}\)) tiene \(2^{20}\) páginas. Si cada PTE ocupa 4 bytes, la tabla de usuario tendría \(2^{20}\) entradas = 4MB (\(2^{10}\) páginas). Esa tabla de 4MB puede mantenerse en memoria virtual y ser mapeada por una tabla raíz de \(2^{10}\) entradas = 4KB, que sí permanece siempre en memoria real.
+
+Traducción en dos niveles (Figura~\ref{fig:addressing_virtual_mem}): los primeros 10 bits de la dirección virtual indexan la tabla raíz para encontrar la página de la tabla de usuario. Si esa página no está en memoria, hay fallo de página. Si está, los siguientes 10 bits indexan la tabla de usuario para encontrar el marco de la página referenciada.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.9\textwidth]{chapters/05_unit/media/addressing_virtual_mem.pdf}
+  \caption{Traducción de dirección en un sistema de paginación con directorios.}
+  \label{fig:addressing_virtual_mem}
+\end{figure}
+
+
+\subsubsection{Buffer de traducción anticipada (TLB)}
+
+En principio, cada referencia virtual requiere dos accesos físicos: uno para buscar la entrada en la tabla de páginas y otro para el dato. Esto duplicaría el tiempo de acceso.
+
+Para evitarlo, se usa una caché de alta velocidad para entradas de tabla: el TLB (Translation Lookaside Buffer). Guarda las entradas usadas más recientemente.
+
+El funcionamiento es así:
+\begin{enumerate}
+  \item Dada una dirección virtual, el procesador consulta el TLB. Si hay acierto (hit), obtiene el número de marco y forma la dirección física.
+  \item Si hay fallo (miss), busca la entrada en la tabla de páginas en memoria. Si el bit de presencia está activo, la página está en memoria: toma el marco, forma la dirección real y actualiza el TLB con la nueva entrada.
+  \item Si el bit de presencia no está activo, ocurre un fallo de página (page fault) y el SO debe traer la página del disco.
+\end{enumerate}
+
+Por el principio de localidad, la mayoría de las referencias usan páginas recientes, por lo que la mayoría son aciertos en el TLB, mejorando mucho el rendimiento.
+
+Detalles de implementación: como el TLB solo tiene parte de la tabla, no se puede indexar solo por número de página. Cada entrada del TLB debe incluir el número de página completo. El hardware compara en paralelo todas las entradas (mapeo asociativo), a diferencia del mapeo directo de la tabla de páginas.
+
+Interacción con la caché: la dirección virtual se traduce primero vía TLB/tabla a dirección física. Luego, con esa dirección física, se consulta la caché de memoria principal para ver si el bloque ya está allí. Por lo tanto, una sola referencia puede implicar buscar en TLB, en tabla de páginas, en caché, en memoria principal y hasta en disco.
+
+% reformular:
+
+\subsubsection{Tamaño de página}
+
+El tamaño de página es una decisión clave de hardware con varios factores en conflicto.
+
+1. Compromiso clásico:
+\begin{itemize}
+  \item Página pequeña: menos fragmentación interna y aprovecha mejor la memoria principal.
+  \item Página grande: menos páginas por proceso, por lo tanto tablas de páginas más pequeñas. Si las páginas son muy pequeñas, las tablas se hacen tan grandes que parte de ellas debe quedar en memoria virtual, pudiendo causar doble fallo de página: uno para traer la porción de la tabla y otro para traer la página del proceso. Además, los dispositivos de almacenamiento rotacionales transfieren bloques grandes de forma más eficiente, lo que favorece páginas grandes.
+\end{itemize}
+
+2. Efecto en la tasa de fallos de página:
+Por el principio de localidad, si la página es muy pequeña, habrá muchas páginas en memoria con código/datos cercanos a las referencias recientes, y la tasa de fallos será baja. Al aumentar el tamaño, cada página incluye lugares más lejanos a la referencia reciente, se debilita la localidad y la tasa de fallos sube. Finalmente, cuando una sola página abarca todo el proceso (punto P en la Figura 8.10a), la tasa vuelve a cero porque ya no hay fallos. Esta tasa también depende de la política de software: a mayor número de marcos asignados a un proceso, menor tasa de fallos (Figura 8.10b).
+
+3. Problema actual con el TLB:
+Aunque la memoria principal crece, el tamaño de los programas también y la localidad disminuye por técnicas modernas:
+\begin{itemize}
+  \item Programación orientada a objetos: muchas referencias dispersas en muchos objetos pequeños.
+  \item Multithreading: cambios abruptos en el flujo de instrucciones.
+\end{itemize}
+
+Con un TLB de tamaño fijo, si los procesos crecen y la localidad baja, la tasa de aciertos del TLB cae y se vuelve un cuello de botella. Agrandar el TLB tiene límites por su interacción con la caché y el hardware. Usar páginas más grandes haría que cada entrada del TLB cubra más memoria, pero como vimos, degrada el rendimiento.
+
+Solución: múltiples tamaños de página.
+Varias arquitecturas soportan tamaños múltiples (MIPS R4000, Alpha, UltraSPARC, x86, IA-64). Permite flexibilidad: regiones grandes y contiguas como el código se mapean con pocas páginas grandes, y la pila de threads con páginas pequeñas. Esto mejora el rendimiento del TLB.
+
+Sin embargo, la mayoría de los SO comerciales aún soportan un solo tamaño, porque cambiar a múltiples tamaños implica modificar muchos aspectos del sistema operativo y es muy complejo.

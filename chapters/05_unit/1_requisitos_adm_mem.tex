@@ -34,7 +34,7 @@ En un sistema multiprogramado, un proceso puede cargarse en cualquier región de
 
 La figura \ref{fig:direccionamiento_proceso} muestra una imagen de un proceso. Para simplificar, supongamos que dicha imagen ocupa una región contigua de la memoria principal. El sistema operativo necesita conocer la ubicación del PCB y de la pila de ejecución, además del punto de entrada para comenzar la ejecución del programa de ese proceso. Como el sistema operativo administra la memoria y se encarga de traer el proceso a la memoria principal, estas direcciones son fáciles de obtener.
 
-Además, el procesador debe manejar las referencias a memoria dentro del programa: las instrucciones de salto incluyen una dirección de la siguiente instrucción a ejecutar; y las instrucciones de acceso a datos contienen la dirección del byte o palabra de datos referenciado. 
+Además, el procesador debe manejar las referencias a memoria dentro del programa: las instrucciones de salto incluyen la dirección de la siguiente instrucción a ejecutar; y las instrucciones de acceso a datos contienen la dirección del byte o palabra de datos referenciado. 
 
 De alguna manera, el hardware y el sistema operativo deben traducir las referencias a memoria que aparecen en el código del programa a direcciones físicas reales, reflejando la ubicación actual del programa en la memoria principal, permitiendo que el proceso se ejecute independientemente de su ubicación en memoria.
 

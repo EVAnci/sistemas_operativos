@@ -56,20 +56,18 @@ Las particiones de distinto tamaño reducen, pero no eliminan, estos inconvenien
 
 Con particiones de igual tamaño, la asignación es trivial: cualquier partición libre puede alojar al proceso.
 
-Con particiones de distinto tamaño existen dos estrategias:
+Como muestra la figura \ref{fig:algo_ubicacion_different_size}, con particiones de distinto tamaño existen dos estrategias:
 \begin{itemize}
   \item \textit{Una cola por partición:} cada proceso espera por la partición más pequeña donde pueda ejecutarse. Minimiza la fragmentación interna, pero algunas particiones grandes pueden permanecer sin utilizar.
   \item \textit{Una única cola global:} cuando una partición queda libre, se selecciona el proceso adecuado y se asigna a la partición disponible más pequeña que pueda contenerlo. Este enfoque aprovecha mejor la memoria del sistema.
 \end{itemize}
-
-Si no hay particiones libres, el sistema debe seleccionar un proceso para intercambiar (\textit{swap out}), decisión que puede basarse en diversos criterios, como el tamaño de la partición, la prioridad del proceso o su estado (listo o bloqueado).
 
 \begin{figure}[!ht]
   \centering 
   \begin{subfigure}[c]{0.45\textwidth}
     \centering 
     \includegraphics[width=\linewidth]{chapters/05_unit/media/one_queue_per_partition.pdf}
-    \caption{Una cola de procesos por partición.}
+    \caption{1 cola de procesos por partición.}
     \label{fig:una_cola_por_proceso}
   \end{subfigure}
   \hspace{4mm}
@@ -79,7 +77,10 @@ Si no hay particiones libres, el sistema debe seleccionar un proceso para interc
     \caption{Única cola.}
   \end{subfigure}
   \caption{Asignación de memoria para particionado fijo.}
+  \label{fig:algo_ubicacion_different_size}
 \end{figure}
+
+Si no hay particiones libres, el sistema debe seleccionar un proceso para intercambiar (\textit{swap out}), decisión que puede basarse en diversos criterios, como el tamaño de la partición, la prioridad del proceso o su estado (listo o bloqueado).
 
 \paragraph{Ventajas y desventajas}
 
@@ -208,7 +209,7 @@ Los programas se cargan utilizando reubicación dinámica en tiempo de ejecució
 Cuando un proceso pasa a estado \textit{Running}, se cargan dos registros especiales (Figura~\ref{fig:soporte_hw_realocation}):
 \begin{itemize}
   \item \textit{Registro base:} contiene la dirección inicial del proceso en memoria.
-  \item \textit{Registro límite:} contiene la dirección final de datos (inicio de pila).
+  \item \textit{Registro límite:} contiene la dirección final de datos.
 \end{itemize}
 \begin{figure}[!ht]
   \centering
@@ -260,6 +261,6 @@ En cada acceso a memoria la traducción es:
 \text{dir}_{\text{física}} = \text{dir}_{\text{relativa}} + \text{base}
 \]
 
-Luego se verifica que \(\text{dir}_{\text{física}} \leq \text{bounds}\). Si está dentro de los límites, la ejecución continúa; si no, se genera una interrupción al SO.
+Luego se verifica que \(\text{dir}_{\text{física}} \leq \text{límite}\). Si está dentro de los límites, la ejecución continúa; si no, se genera una interrupción al SO.
 
 Este mecanismo permite intercambiar y mover procesos libremente y, a la vez, proporciona protección y aislamiento entre procesos.

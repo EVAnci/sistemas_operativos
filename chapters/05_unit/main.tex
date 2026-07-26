@@ -7,3 +7,121 @@ Una buena administración de memoria permite mantener suficientes procesos listo
 \input{chapters/05_unit/1_requisitos_adm_mem.tex}
 
 \input{chapters/05_unit/2_particionamiento.tex}
+
+\section{Paginación}
+
+Tanto las particiones fijas desiguales como las variables resultan ineficientes: las primeras generan fragmentación interna y las segundas, externa. La paginación resuelve este problema al dividir la memoria principal en bloques pequeños de tamaño fijo llamados marcos (frames). Del mismo modo, cada proceso se divide en bloques equivalentes llamados páginas.
+
+De esta forma, las páginas de un proceso pueden asignarse a cualquier marco libre, sin necesidad de que sean contiguos. El sistema operativo mantiene una lista de marcos libres. Si un proceso A tiene 4 páginas, se cargan en 4 marcos disponibles, aunque estén dispersos.
+
+Esto elimina la fragmentación externa: aunque no haya espacio contiguo suficiente, un proceso siempre puede cargarse si hay marcos libres suficientes. Solo queda una pequeña fragmentación interna en la última página del proceso.
+
+Para lograrlo, el SO mantiene una tabla de páginas por cada proceso, que indica en qué marco está cada página. La dirección lógica que genera el programa se compone de dos partes: \texttt{número de página + desplazamiento (offset)}. El hardware del procesador usa la tabla de páginas para traducirla a una dirección física: \texttt{número de marco + desplazamiento}.
+
+Por ejemplo, considere los procesos A y B paginados y cargados en memoria como se muestra en la figura \ref{sfig:paginacion_a_y_b}. Si ahora se intenta insertar el proceso C tiene 5 páginas, pueden cargarse en los marcos 4, 5, 6, 11 y 12 como se muestra en la figura \ref{sfig:paginacion_a_y_b}. Su tabla de páginas registrará esa correspondencia.
+
+\begin{figure}[!ht]
+  \centering
+  \begin{subfigure}[t]{0.4\textwidth}
+    \centering 
+    \begin{tikzpicture}[scale=0.5,font=\scriptsize]
+      \foreach \y in {0,...,3} {
+        \draw (0,\y) rectangle (4,{\y+1});
+      }
+      \foreach \y in {0,...,3} {
+        \draw[fill=red!50!gray!8] (0,{7-\y}) rectangle node{\(B_\y\)} (4,{8-\y});
+      }
+      \foreach \y in {8,...,10} {
+        \draw (0,\y) rectangle (4,{\y+1});
+      }
+      \foreach \y in {0,...,3} {
+        \draw[fill=gray!12] (0,{14-\y}) rectangle node{\(A_\y\)} (4,{15-\y});
+      }
+      \foreach \y in {0,...,14} {
+        \node[left] at(0,{14.5-\y}) {\y};
+      }
+    \end{tikzpicture}
+    \caption{Procesos A y B paginados cargados en marcos de memoria.}
+    \label{sfig:paginacion_a_y_b}
+  \end{subfigure}
+  \hspace{5mm}
+  \begin{subfigure}[t]{0.4\textwidth}
+    \centering
+    \begin{tikzpicture}[scale=0.5,font=\scriptsize]
+      \foreach \y in {0,...,1} {
+        \draw (0,\y) rectangle (4,{\y+1});
+      }
+      \foreach \y in {3,4} {
+        \draw[fill=white!94!blue!94!green] (0,{6-\y}) rectangle node{\(C_\y\)} (4,{7-\y});
+      }
+      \foreach \y in {0,...,3} {
+        \draw[fill=red!50!gray!8] (0,{7-\y}) rectangle node{\(B_\y\)} (4,{8-\y});
+      }
+      \foreach \y in {0,...,2} {
+        \draw[fill=white!94!blue!94!green] (0,{10-\y}) rectangle node{\(C_\y\)} (4,{11-\y});
+      }
+      \foreach \y in {0,...,3} {
+        \draw[fill=gray!12] (0,{14-\y}) rectangle node{\(A_\y\)} (4,{15-\y});
+      }
+      \foreach \y in {0,...,14} {
+        \node[left] at(0,{14.5-\y}) {\y};
+      }
+    \end{tikzpicture}
+    \caption{Introducción del proceso C.}
+    \label{sfig:introduccion_c_paginacion}
+  \end{subfigure}
+  \caption{}
+\end{figure}
+
+
+El tamaño de marcos y páginas se define como una potencia de 2 (ej 1KB = 1024 bytes). Esto tiene dos ventajas:
+\begin{enumerate}
+  \item La dirección lógica (página, offset) coincide con la dirección relativa del programa, por lo que es transparente para el programador.
+  \item La traducción es muy simple en hardware. Si la dirección tiene n bits para la página y m bits para el offset, el procesador: a) extrae el número de página, b) busca en la tabla de páginas el marco \texttt{k}, y c) forma la dirección física concatenando \texttt{k} con el offset.
+\end{enumerate}
+
+Ejemplo con 16 bits y páginas de 1KB (10 bits de offset, 6 de página): la dirección lógica 1502 = \texttt{000001 0111011110} es página 1, offset 478. Si la página 1 está en el marco 6 (\texttt{000110}), la dirección física será \texttt{000110 0111011110}.
+
+En términos simples, la memoria se divide en muchos marcos pequeños. Cada proceso se divide en páginas y se cargan en marcos disponibles, no contiguos, mediante una tabla de páginas. Esto elimina la fragmentación externa y hace eficiente el uso de la memoria.
+
+\section{Segmentación}
+
+Un programa puede subdividirse en segmentos de tamaño variable (código, datos, pila, etc.), aunque existe un tamaño máximo por segmento. Como en la paginación, la dirección lógica tiene dos partes: \texttt{número de segmento + desplazamiento (offset)}.
+
+Diferencia con particionado dinámico: al usar segmentos de tamaño desigual, es similar al particionado dinámico. Sin memoria virtual, todos los segmentos del programa deben estar en memoria para ejecutarse. La diferencia es que el programa puede ocupar varias particiones no contiguas. Esto elimina la fragmentación interna, pero sufre fragmentación externa, aunque menor, porque los bloques son más pequeños.
+
+A diferencia de la paginación, que es invisible para el programador, la segmentación es visible y sirve para organizar mejor el programa. El compilador o programador asigna el código y los datos a distintos segmentos para facilitar la programación modular. Su inconveniente es que debe respetar el tamaño máximo de segmento.
+
+Traducción de direcciones:
+No hay una relación directa entre dirección lógica y física. Se usa una tabla de segmentos por proceso, que por cada segmento guarda su dirección de inicio en memoria física y su longitud. Cuando un proceso pasa a ejecución, la dirección de su tabla se carga en un registro especial.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.8\textwidth]{chapters/05_unit/media/logical_to_phy_segmentation.pdf}
+  \caption{Comparación de traducción de direcciones lógicas a físicas para paginación y segmentación.}
+  \label{fig:comp_pag_seg}
+\end{figure}
+
+Si la dirección lógica tiene \texttt{n} bits para el segmento y \texttt{m} bits para el offset (Figura~\ref{fig:comp_pag_seg}):
+\begin{enumerate}
+  \item Se extrae el número de segmento (los \texttt{n} bits de la izquierda).
+  \item Se usa como índice en la tabla de segmentos para obtener la dirección física de inicio del segmento.
+  \item Se valida que el offset (los \texttt{m} bits de la derecha) sea menor que la longitud del segmento. Si es mayor o igual, la dirección es inválida.
+  \item La dirección física final es: 
+  \begin{center}
+    \texttt{dirección de inicio del segmento + offset}
+  \end{center}
+\end{enumerate}
+
+Ejemplo con \texttt{n=4} y \texttt{m=12} (segmento máximo de \(2^12 = 4096\) bytes): la dirección lógica \texttt{0001 001011110000} es segmento 1, offset 752. Si ese segmento inicia en \texttt{0010000000100000}, la dirección física es \texttt{0010000000100000 + 001011110000 = 0010001100010000}.
+
+A modo de síntesis, como se muestra en la comparación de la figura \ref{fig:comp_mem_management}, el proceso se divide en segmentos de tamaño variable que no necesitan ser contiguos en memoria. Al cargarse, se crea una tabla de segmentos que permite traducir y validar cada acceso.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.9\textwidth]{chapters/05_unit/media/logical_address_segmentation.pdf}
+  \caption{Comparación de las diferentes técnicas de gestión de memoria.}
+  \label{fig:comp_mem_management}
+\end{figure}
+
+\input{chapters/05_unit/3_memoria_virtual.tex}
