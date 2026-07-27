@@ -18,7 +18,7 @@ Esto elimina la fragmentación externa: aunque no haya espacio contiguo suficien
 
 Para lograrlo, el SO mantiene una tabla de páginas por cada proceso, que indica en qué marco está cada página. La dirección lógica que genera el programa se compone de dos partes: \texttt{número de página + desplazamiento (offset)}. El hardware del procesador usa la tabla de páginas para traducirla a una dirección física: \texttt{número de marco + desplazamiento}.
 
-Por ejemplo, considere los procesos A y B paginados y cargados en memoria como se muestra en la figura \ref{sfig:paginacion_a_y_b}. Si ahora se intenta insertar el proceso C tiene 5 páginas, pueden cargarse en los marcos 4, 5, 6, 11 y 12 como se muestra en la figura \ref{sfig:paginacion_a_y_b}. Su tabla de páginas registrará esa correspondencia.
+Por ejemplo, considere los procesos A y B paginados y cargados en memoria como se muestra en la figura \ref{sfig:paginacion_a_y_b}. Si ahora se intenta insertar el proceso C tiene 5 páginas, pueden cargarse en los marcos 4, 5, 6, 11 y 12 como se muestra en la figura \ref{sfig:introduccion_c_paginacion}. Su tabla de páginas registrará esa correspondencia.
 
 \begin{figure}[!ht]
   \centering
@@ -113,7 +113,7 @@ Si la dirección lógica tiene \texttt{n} bits para el segmento y \texttt{m} bit
   \end{center}
 \end{enumerate}
 
-Ejemplo con \texttt{n=4} y \texttt{m=12} (segmento máximo de \(2^12 = 4096\) bytes): la dirección lógica \texttt{0001 001011110000} es segmento 1, offset 752. Si ese segmento inicia en \texttt{0010000000100000}, la dirección física es \texttt{0010000000100000 + 001011110000 = 0010001100010000}.
+Ejemplo con \texttt{n=4} y \texttt{m=12} (segmento máximo de \(2^{12} = 4096\) bytes): la dirección lógica \texttt{0001 001011110000} es segmento 1, offset 752. Si ese segmento inicia en \texttt{0010000000100000}, la dirección física es \texttt{0010000000100000 + 001011110000 = 0010001100010000}.
 
 A modo de síntesis, como se muestra en la comparación de la figura \ref{fig:comp_mem_management}, el proceso se divide en segmentos de tamaño variable que no necesitan ser contiguos en memoria. Al cargarse, se crea una tabla de segmentos que permite traducir y validar cada acceso.
 
@@ -125,3 +125,5 @@ A modo de síntesis, como se muestra en la comparación de la figura \ref{fig:co
 \end{figure}
 
 \input{chapters/05_unit/3_memoria_virtual.tex}
+
+\input{chapters/05_unit/4_os_mem_mgr.tex}

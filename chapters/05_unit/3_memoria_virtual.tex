@@ -56,33 +56,31 @@ Para que la memoria virtual sea efectiva se necesitan dos cosas:
 
 El término memoria virtual suele asociarse a paginación. Con paginación simple, toda la memoria se divide en marcos del mismo tamaño y el proceso en páginas iguales, y se cargan todas las páginas en marcos no necesariamente contiguos. En paginación virtual, el principio es el mismo, pero no es necesario cargar todas las páginas para ejecutar.
 
-Cada proceso sigue teniendo su propia tabla de páginas, pero las entradas (PTE - Page Table Entry) son más complejas:
-\begin{itemize}
-  \item Bit de presencia (P): indica si la página está o no en memoria principal. Si está, la entrada contiene el número de marco.
-  \item Bit de modificación (M): indica si la página fue modificada desde que se cargó. Si no fue modificada, no hace falta escribirla a disco al reemplazarla.
-  \item Otros bits de control (protección, compartición, etc.).
-\end{itemize}
+Cada proceso sigue teniendo su propia tabla de páginas, pero las entradas (PTE - Page Table Entry) son más complejas añadiendo un bit de presencia, un bit de modificación y otros bits de control.
 
 \subsubsection{Estructura de la tabla de páginas}
 
-El mecanismo básico para leer una palabra de la memoria implica la traducción de una dirección virtual (o lógica) ---compuesta por un número de página y un desplazamiento--- a una dirección física ---compuesta por un número de marco y un desplazamiento--- utilizando una tabla de páginas. Dado que la tabla de páginas tiene una longitud variable según el tamaño del proceso, no se puede mantener en registros. En su lugar, debe estar ubicada en la memoria principal para ser accedida.
+La tabla de páginas de un proceso es, conceptualmente, un vector o arreglo en el que el índice de la celda es el Número de Página Virtual ($p$).
 
-La traducción es: 
-\begin{center}
- \texttt{dirección virtual \(\rightarrow\) dirección física}\\
-(\(n^\circ\) página + offset) ~\(\quad\) (\(n^\circ\) marco + offset)
-\end{center}
-Como la tabla es de longitud variable, debe estar en memoria principal, no en registros. Un registro guarda la dirección de inicio de la tabla del proceso en ejecución. El número de página indexa la tabla para hallar el marco.
-
-Además del número de marco, cada entrada de la tabla de páginas contiene información de control fundamental para la gestión de la memoria virtual:
+Cada posición (llamada Page Table Entry o PTE) almacena:
 \begin{itemize}
-  \item \textit{Bit de presencia:} indica si la página está o no en la memoria principal.
-  \item \textit{Bit de modificación:} indica si la página ha sido modificada desde la última vez que fue cargada en memoria. Si no ha habido cambio, la página no necesita escribirse en el disco cuando se quita de memoria principal.
+  \item Número de Marco Físico ($f$): El identificador del bloque real en memoria principal donde está guardada esa página.
+  \item Bit de presencia: indica si la página está en memoria principal o secundaria.
+  \item Bits de Control: Permisos de acceso (Lectura/Escritura/Ejecución), bit de modificación (dirty bit), entre otros.
 \end{itemize}
+Procedimiento de traducción en Paginación:
+\begin{enumerate}
+  \item La dirección virtual llega como el par ($p$,$d$), donde $p$ es la página y $d$ es el offset (desplazamiento).
+  \item La MMU usa \(p\) para indexar la tabla del proceso activo y extrae el marco $f$.
+  \item Como las páginas y los marcos tienen exactamente el mismo tamaño, el desplazamiento dentro de la página es idéntico al desplazamiento dentro del marco.
+  \item La dirección física resultante es simplemente la combinación del marco con el offset: ($f$,$d$).
+\end{enumerate}
 
-Normalmente hay una tabla por proceso, pero pueden ser enormes. Por ejemplo: con 2GB de memoria virtual y páginas de 512 bytes, se necesitan \(2^{22}\) entradas. Ocuparía demasiada memoria. La solución es guardar las propias tablas de páginas en memoria virtual, por lo que también se paginan. Cuando un proceso corre, al menos la parte de su tabla que contiene la página en ejecución debe estar en memoria real.
+Como la tabla es de longitud variable, debe estar en memoria principal, no en registros. Un registro guarda la dirección de inicio de la tabla del proceso en ejecución.
 
-Para manejar tablas grandes se usa el esquema de dos niveles: un directorio de páginas. Cada entrada del directorio apunta a una tabla de páginas. Si el directorio tiene \(X\) entradas y cada tabla \(Y\) entradas, el proceso puede tener hasta \(X \times Y\) páginas. Normalmente cada tabla ocupa como máximo una página.
+Normalmente hay una tabla por proceso, pero en sí mismas, las tablas pueden ser enormes. Por ejemplo: con 2GB de memoria virtual y páginas de 512 bytes, se necesitan \(2^{22}\) entradas. Ocuparía demasiada memoria. La solución es guardar las propias tablas de páginas en memoria virtual, por lo que también se paginan. Ahora el problema reside en cómo encontrar la tabla de un proceso si para hallarla debería consultarse la memoria virtual, y por ende la tabla de páginas.
+
+Para solucionar el problema anterior y manejar tablas grandes se usa el esquema de dos niveles: un directorio de páginas permanente en memoria real. Cada entrada del directorio apunta a una tabla de páginas. Si el directorio tiene \(X\) entradas y cada tabla \(Y\) entradas, el proceso puede tener hasta \(X \times Y\) páginas. Normalmente cada tabla ocupa como máximo una página.
 
 \begin{figure}[!ht]
   \centering
@@ -101,7 +99,6 @@ Traducción en dos niveles (Figura~\ref{fig:addressing_virtual_mem}): los primer
   \caption{Traducción de dirección en un sistema de paginación con directorios.}
   \label{fig:addressing_virtual_mem}
 \end{figure}
-
 
 \subsubsection{Buffer de traducción anticipada (TLB)}
 
@@ -122,22 +119,18 @@ Detalles de implementación: como el TLB solo tiene parte de la tabla, no se pue
 
 Interacción con la caché: la dirección virtual se traduce primero vía TLB/tabla a dirección física. Luego, con esa dirección física, se consulta la caché de memoria principal para ver si el bloque ya está allí. Por lo tanto, una sola referencia puede implicar buscar en TLB, en tabla de páginas, en caché, en memoria principal y hasta en disco.
 
-% reformular:
-
 \subsubsection{Tamaño de página}
 
 El tamaño de página es una decisión clave de hardware con varios factores en conflicto.
 
-1. Compromiso clásico:
+El compromiso según tamaño de página puede categorizarse de la siguiente manera:
 \begin{itemize}
   \item Página pequeña: menos fragmentación interna y aprovecha mejor la memoria principal.
   \item Página grande: menos páginas por proceso, por lo tanto tablas de páginas más pequeñas. Si las páginas son muy pequeñas, las tablas se hacen tan grandes que parte de ellas debe quedar en memoria virtual, pudiendo causar doble fallo de página: uno para traer la porción de la tabla y otro para traer la página del proceso. Además, los dispositivos de almacenamiento rotacionales transfieren bloques grandes de forma más eficiente, lo que favorece páginas grandes.
 \end{itemize}
 
-2. Efecto en la tasa de fallos de página:
-Por el principio de localidad, si la página es muy pequeña, habrá muchas páginas en memoria con código/datos cercanos a las referencias recientes, y la tasa de fallos será baja. Al aumentar el tamaño, cada página incluye lugares más lejanos a la referencia reciente, se debilita la localidad y la tasa de fallos sube. Finalmente, cuando una sola página abarca todo el proceso (punto P en la Figura 8.10a), la tasa vuelve a cero porque ya no hay fallos. Esta tasa también depende de la política de software: a mayor número de marcos asignados a un proceso, menor tasa de fallos (Figura 8.10b).
+Por el principio de localidad, si la página es muy pequeña, habrá muchas páginas en memoria con código/datos cercanos a las referencias recientes, y la tasa de fallos será baja. Al aumentar el tamaño, cada página incluye lugares más lejanos a la referencia reciente, se debilita la localidad y la tasa de fallos sube. Finalmente, cuando una sola página abarca todo el proceso, la tasa vuelve a cero porque ya no hay fallos. Esta tasa también depende de la política de software: a mayor número de marcos asignados a un proceso, menor tasa de fallos.
 
-3. Problema actual con el TLB:
 Aunque la memoria principal crece, el tamaño de los programas también y la localidad disminuye por técnicas modernas:
 \begin{itemize}
   \item Programación orientada a objetos: muchas referencias dispersas en muchos objetos pequeños.
@@ -146,7 +139,64 @@ Aunque la memoria principal crece, el tamaño de los programas también y la loc
 
 Con un TLB de tamaño fijo, si los procesos crecen y la localidad baja, la tasa de aciertos del TLB cae y se vuelve un cuello de botella. Agrandar el TLB tiene límites por su interacción con la caché y el hardware. Usar páginas más grandes haría que cada entrada del TLB cubra más memoria, pero como vimos, degrada el rendimiento.
 
-Solución: múltiples tamaños de página.
-Varias arquitecturas soportan tamaños múltiples (MIPS R4000, Alpha, UltraSPARC, x86, IA-64). Permite flexibilidad: regiones grandes y contiguas como el código se mapean con pocas páginas grandes, y la pila de threads con páginas pequeñas. Esto mejora el rendimiento del TLB.
+La solución consiste en utilizar múltiples tamaños de página.
+Varias arquitecturas soportan tamaños múltiples. Esto permite más permite flexibilidad; regiones grandes y contiguas como el código se mapean con pocas páginas grandes, y la pila de hilos con páginas pequeñas. Esto mejora el rendimiento del TLB.
 
 Sin embargo, la mayoría de los SO comerciales aún soportan un solo tamaño, porque cambiar a múltiples tamaños implica modificar muchos aspectos del sistema operativo y es muy complejo.
+
+\subsection{Segmentación con memoria virtual}
+
+La segmentación permite al programador ver la memoria como múltiples espacios de direcciones o segmentos de tamaño variable y dinámico. Las referencias son del tipo \texttt{(número de segmento, offset)}.
+
+Ventajas para el programador:
+\begin{enumerate}
+  \item Estructuras de datos que crecen: no hace falta adivinar el tamaño. Se le asigna su propio segmento y el SO lo agranda o achica según necesidad. Si no hay espacio en memoria principal, el SO lo mueve a un área más grande o lo intercambia a disco.
+  \item Recompilación independiente: los programas pueden modificarse y recompilarse por separado sin tener que re-enlazar y recargar todo.
+  \item Compartición: un programa utilitario o tabla de datos puede ponerse en un segmento compartido por varios procesos.
+  \item Protección: al tener un conjunto bien definido de programas o datos por segmento, es más fácil asignar privilegios de acceso.
+\end{enumerate}
+
+\subsubsection{Organización}
+
+Como en segmentación simple, cada proceso tiene su tabla de segmentos con dirección de inicio y longitud de cada segmento. Con memoria virtual, las entradas son más complejas, porque no todos los segmentos están en memoria:
+\begin{itemize}
+  \item Bit de presencia: indica si el segmento está en memoria principal. Si está, la entrada guarda su dirección de inicio y longitud.
+  \item Bit de modificación: indica si fue alterado desde que se cargó. Si no cambió, no hace falta escribirlo a disco al reemplazarlo.
+  \item Otros bits de control (protección, compartición).
+\end{itemize}
+
+Traducción de direcciones: la dirección lógica \texttt{(segmento, offset)} se traduce a física usando la tabla de segmentos. Como la tabla es de longitud variable, está en memoria principal y un registro guarda su dirección de inicio cuando el proceso corre.
+
+El número de segmento indexa la tabla para obtener la dirección de inicio del segmento, se verifica que el offset sea menor que la longitud, y se suma el offset para obtener la dirección real:
+\begin{center}
+\texttt{Dirección física = Dirección de inicio del segmento + offset}
+\end{center}
+
+\subsection{Paginación y Segmentación Combinadas}
+
+Paginación y segmentación tienen fortalezas distintas. La paginación es transparente al programador, elimina la fragmentación externa y permite algoritmos de gestión sofisticados al mover piezas fijas. La segmentación es visible al programador y aporta manejo de estructuras que crecen, modularidad, compartición y protección. Para unir ambas ventajas, algunos sistemas combinan las dos.
+
+\subparagraph{Funcionamiento} el espacio del usuario se divide en segmentos (a criterio del programador). Cada segmento, a su vez, se divide en páginas de tamaño fijo, igual al marco de memoria. Si un segmento es menor que una página, ocupa solo una. Para el programador la dirección lógica sigue siendo \texttt{número de segmento + offset}, pero el sistema interpreta ese offset como \texttt{número de página + offset dentro del segmento}.
+
+\begin{figure}[!ht]
+  \centering
+  \includegraphics[width=0.9\textwidth]{chapters/05_unit/media/comb_page_segment_vm.pdf}
+  \caption{Traducción de direcciones en un sistema con paginación y segmentación.}
+\end{figure}
+
+\subparagraph{Traducción} cada proceso tiene una tabla de segmentos y una tabla de páginas por cada segmento. Un registro guarda la dirección de la tabla de segmentos del proceso en ejecución. El procesador usa el número de segmento para indexar la tabla de segmentos y hallar la tabla de páginas de ese segmento. Luego usa el número de página para indexar esa tabla y obtener el marco. Finalmente combina \texttt{marco + offset} para la dirección física.
+
+\subparagraph{Formato de entradas} la entrada de la tabla de segmentos contiene la longitud del segmento y la base, que ahora apunta a una tabla de páginas. No necesita bits de presente/modificado, porque eso se maneja a nivel de página. La entrada de tabla de páginas es como en paginación pura: número de marco si está presente, bit de modificado, y bits de protección.
+
+\subsubsection{Protección y Compartición}
+
+La segmentación facilita la protección y compartición. Como cada entrada de segmento incluye longitud y base, un programa no puede acceder fuera de los límites del segmento. Para compartir, un mismo segmento puede ser referenciado en las tablas de segmentos de varios procesos. Esto también es posible con paginación, pero al no ser visible la estructura para el programador, es más difícil de especificar.
+
+Un esquema común es la estructura de anillos: los anillos interiores (número más bajo) tienen más privilegios. Típicamente el anillo 0 es para el kernel del SO y los anillos exteriores para aplicaciones.
+
+Principios básicos:
+\begin{itemize}
+  \item Un programa solo puede acceder a datos del mismo anillo o de un anillo menos privilegiado.
+  \item Un programa puede llamar a servicios del mismo anillo o de un anillo más privilegiado.
+\end{itemize}
+
