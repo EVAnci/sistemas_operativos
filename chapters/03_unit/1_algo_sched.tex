@@ -1,0 +1,257 @@
+\section{Algoritmos de planificación}
+
+\subsection{Criterios de la planificación de corto plazo}
+
+El objetivo de la \textit{planificación de corto plazo} es asignar el tiempo de procesador de manera que se optimice el rendimiento del sistema. Para evaluar los distintos algoritmos de planificación se utilizan diversos criterios, que pueden clasificarse en dos dimensiones.
+
+Según su enfoque, los criterios pueden ser:
+\begin{itemize}
+  \item \textit{Orientados al usuario:} evalúan la calidad del servicio percibida por los usuarios o procesos. El criterio más representativo es el \textit{tiempo de respuesta}, es decir, el tiempo transcurrido entre la solicitud de un servicio y el comienzo de la respuesta. El objetivo es proporcionar una respuesta rápida y consistente.
+  \item \textit{Orientados al sistema:} buscan maximizar la utilización eficiente de los recursos. Un criterio importante es el \textit{rendimiento}, que mide la cantidad de procesos completados por unidad de tiempo.
+\end{itemize}
+
+También pueden clasificarse según su forma de evaluación:
+\begin{itemize}
+  \item \textit{Criterios de rendimiento:} son cuantitativos y medibles, como el tiempo de respuesta, el rendimiento y la utilización del procesador.
+  \item \textit{Criterios no relacionados directamente con el rendimiento:} son principalmente cualitativos. Un ejemplo es la \textit{predictibilidad}, que busca que el sistema mantenga un comportamiento estable independientemente de la carga de trabajo.
+\end{itemize}
+
+Estos criterios suelen entrar en conflicto, por lo que no es posible optimizarlos todos simultáneamente. En consecuencia, cada algoritmo de planificación prioriza algunos objetivos sobre otros según el tipo de sistema.
+
+\subsection{Uso de prioridades}
+
+En muchos sistemas, cada proceso posee una \textit{prioridad}, y el planificador selecciona siempre un proceso de mayor prioridad antes que uno de menor prioridad.
+
+En lugar de una única cola de procesos listos, el sistema mantiene varias colas ordenadas por prioridad (\(RQ_0, RQ_1, \ldots, RQ_n\)). El planificador examina primero la cola de mayor prioridad y selecciona un proceso según la política de planificación utilizada. Solo si esta cola está vacía continúa con la siguiente.
+
+\begin{figure}[!ht]
+  \centering
+  % Conjunto de colas Ready ordenadas por prioridad:
+  % RQ0 (máxima prioridad), RQ1, ..., RQn.
+  % El planificador recorre las colas desde la mayor hasta la menor prioridad.
+  \caption{Planificación mediante múltiples colas de prioridad.}
+\end{figure}
+
+Un inconveniente de la planificación basada exclusivamente en prioridades es la \textit{inanición} (\textit{starvation}): un proceso de baja prioridad puede esperar indefinidamente si continúan llegando procesos de mayor prioridad. Para evitar este problema, muchos sistemas implementan \textit{envejecimiento}, incrementando gradualmente la prioridad de un proceso en función del tiempo que permanece esperando o de su historial de ejecución.
+
+\subsection{Políticas de planificación}
+
+Las políticas de planificación pueden compararse según dos aspectos principales:
+\begin{itemize}
+  \item \textit{Función de selección:} determina cuál de los procesos listos será el siguiente en ejecutarse. Puede basarse en el tiempo de espera, la prioridad o las características de ejecución del proceso.
+  \item \textit{Modo de decisión:} determina cuándo se aplica la función de selección.
+\end{itemize}
+Para describir las funciones de selección se utilizan las siguientes variables:
+\begin{itemize}
+  \item \(w\): tiempo que el proceso ha permanecido esperando.
+  \item \(e\): tiempo de CPU consumido hasta el momento.
+  \item \(s\): tiempo total de servicio requerido por el proceso (normalmente estimado).
+\end{itemize}
+Según el modo de decisión, los algoritmos se clasifican en:
+\begin{itemize}
+  \item \textit{No expropiativos (\textit{Non-preemptive}):} una vez que un proceso obtiene el procesador, continúa ejecutándose hasta finalizar o bloquearse voluntariamente (por ejemplo, por una operación de E/S).
+  \item \textit{Expropiativos (\textit{Preemptive}):} el sistema operativo puede interrumpir al proceso en ejecución y devolverlo a la cola de listos. Esto puede ocurrir cuando llega un proceso de mayor prioridad, cuando finaliza una operación de E/S o al producirse una interrupción del reloj.
+\end{itemize}
+Los algoritmos expropiativos suelen ofrecer un mejor tiempo de respuesta y evitan que un proceso monopolice el procesador, aunque introducen un mayor costo debido a los cambios de contexto.
+
+\begin{table}[!ht]
+\centering
+\caption{Comparación de las principales políticas de planificación.}
+\begin{tabular}{|p{3.2cm}|c|c|c|c|c|c|}
+\hline
+\textit{Característica} & \textit{FCFS} & \textit{RR} & \textit{SPN} & \textit{SRT} & \textit{HRRN} & \textit{Feedback} \\
+\hline
+Función de selección & \(\max(w)\) & Constante & \(\min(s)\) & \(\min(s-e)\) & \(\max\left(\frac{w+s}{s}\right)\) & Variable \\
+\hline
+Modo & No expropiativo & Expropiativo & No expropiativo & Expropiativo & No expropiativo & Expropiativo \\
+\hline
+Rendimiento (\textit{Throughput}) & Medio & Depende del quantum & Alto & Alto & Alto & Medio \\
+\hline
+Tiempo de respuesta & Alto para procesos largos & Bueno & Bueno para procesos cortos & Bueno & Bueno & Variable \\
+\hline
+Sobrecarga & Baja & Baja & Alta & Alta & Alta & Alta \\
+\hline
+Efecto principal & Perjudica procesos cortos & Trato equitativo & Perjudica procesos largos & Perjudica procesos largos & Buen equilibrio & Favorece procesos de E/S \\
+\hline
+Inanición & No & No & Sí & Sí & No & Sí \\
+\hline
+\end{tabular}
+\end{table}
+
+Para evaluar una política de planificación suele utilizarse el \textit{tiempo de retorno} (\textit{Turnaround Time, TAT}), que representa el tiempo total que un proceso permanece en el sistema:
+\[
+  TAT = \text{Tiempo de espera} + \text{Tiempo de servicio}.
+\]
+También es frecuente utilizar el \textit{tiempo de retorno normalizado}, definido como
+\[
+TAT_N = \frac{TAT}{s},
+\]
+el cual mide el retraso relativo experimentado por un proceso. Su valor mínimo es \(1\), correspondiente al caso ideal en que el proceso nunca debe esperar; valores mayores indican una peor calidad del servicio.
+
+\subsubsection{First-Come, First-Served (FCFS)}
+
+La política \textit{First-Come, First-Served} (\textit{FCFS}), también conocida como \textit{First-In, First-Out} (FIFO), es el algoritmo de planificación más sencillo. Los procesos se incorporan al final de la cola de listos en el orden en que llegan, y cuando el proceso en ejecución finaliza o se bloquea, se selecciona el que lleva más tiempo esperando.
+
+FCFS es una política \textit{no expropiativa} y resulta simple de implementar, con una sobrecarga mínima. Sin embargo, presenta importantes desventajas:
+\begin{itemize}
+  \item Favorece a los procesos largos frente a los cortos. Si un proceso de larga duración obtiene primero el procesador, los procesos cortos que llegan después deberán esperar hasta que este termine, aumentando considerablemente su tiempo de retorno normalizado.
+  \item Favorece a los procesos intensivos en CPU frente a los intensivos en E/S. Mientras un proceso de CPU monopoliza el procesador, los procesos de E/S permanecen esperando para continuar su ejecución, lo que puede provocar que tanto el procesador como los dispositivos de E/S permanezcan ociosos en distintos momentos, reduciendo la eficiencia global del sistema.
+\end{itemize}
+
+Debido a estas limitaciones, FCFS rara vez se utiliza como política única en sistemas modernos. No obstante, suele emplearse dentro de cada nivel de prioridad en planificadores con múltiples colas, aprovechando su simplicidad para ordenar los procesos que poseen la misma prioridad.
+
+\subsubsection{Round Robin (RR)}
+
+La política \textit{Round Robin (RR)} es una extensión expropiativa de FCFS que busca mejorar el tiempo de respuesta, especialmente para procesos cortos e interactivos. Cada proceso recibe un \textit{quantum} de CPU. Cuando este tiempo expira, una interrupción del reloj expropia el proceso, que vuelve al final de la cola de listos, y el siguiente proceso es seleccionado siguiendo el orden FCFS.
+
+El parámetro más importante de este algoritmo es el \textit{tamaño del quantum}:
+\begin{itemize}
+  \item Un \textit{quantum pequeño} mejora el tiempo de respuesta, pero incrementa la sobrecarga debido a la mayor cantidad de interrupciones y cambios de contexto.
+  \item Un \textit{quantum grande} reduce la sobrecarga, aunque disminuye la capacidad de respuesta. En el caso límite, si el quantum es mayor que el tiempo de ejecución de cualquier proceso, Round Robin se comporta como FCFS.
+\end{itemize}
+
+\begin{figure}[!ht]
+  \centering
+  % Comparación del efecto de distintos valores del quantum sobre
+  % el tiempo de respuesta. A menor quantum, mayor capacidad de respuesta
+  % pero también mayor cantidad de cambios de contexto.
+  \caption{Influencia del tamaño del quantum en el tiempo de respuesta y la sobrecarga.}
+\end{figure}
+
+Round Robin es especialmente adecuado para sistemas de \textit{tiempo compartido} e interactivos, ya que garantiza que todos los procesos reciban periódicamente tiempo de CPU.
+
+Sin embargo, presenta una desventaja cuando conviven procesos intensivos en CPU e intensivos en E/S. Los procesos de CPU suelen consumir completamente su quantum y volver inmediatamente a la cola de listos, mientras que los procesos de E/S utilizan solo una parte del quantum antes de bloquearse. Como consecuencia, los procesos intensivos en CPU pueden terminar recibiendo una proporción mayor del tiempo de procesador.
+
+Una variante denominada \textit{Virtual Round Robin (VRR)} incorpora una \textit{cola auxiliar} para los procesos que finalizan una operación de E/S. Estos procesos tienen prioridad sobre la cola principal y reanudan su ejecución utilizando únicamente la parte restante del quantum que no habían consumido antes de bloquearse. Esta estrategia mejora la equidad y el rendimiento de los procesos intensivos en E/S.
+
+\subsubsection{Shortest Process Next (SPN)}
+
+La política \textit{Shortest Process Next (SPN)} es un algoritmo \textit{no expropiativo} que selecciona el proceso con el \textit{menor tiempo de ejecución estimado}. De esta manera, los procesos cortos tienen prioridad sobre los largos, reduciendo el tiempo de respuesta promedio respecto a FCFS.
+
+Su principal inconveniente es que el sistema debe conocer o estimar el tiempo de servicio de cada proceso. En sistemas interactivos, esta estimación suele obtenerse a partir de la duración de las ráfagas de CPU anteriores.
+
+Una forma sencilla de estimar el siguiente tiempo de ejecución es mediante el promedio de las observaciones previas. Sin embargo, el método más utilizado es el \textit{promedio exponencial}, que asigna mayor peso a las ejecuciones recientes:
+\[
+S_{n+1}=\alpha T_n+(1-\alpha)S_n,\qquad 0<\alpha<1
+\]
+donde:
+\begin{itemize}
+  \item $T_n$ es la duración de la última ráfaga de CPU observada.
+  \item $S_n$ es la estimación anterior.
+  \item $\alpha$ determina cuánto influyen las observaciones recientes.
+\end{itemize}
+Al desarrollar la expresión se obtiene:
+\[
+S_{n+1}
+=\alpha T_n
++(1-\alpha)\alpha T_{n-1}
++(1-\alpha)^2\alpha T_{n-2}
++\cdots
+\]
+Por lo tanto, las observaciones más recientes tienen mayor influencia sobre la estimación, mientras que el peso de las más antiguas decrece exponencialmente. Un valor grande de $\alpha$ permite adaptarse rápidamente a cambios en el comportamiento del proceso, aunque produce estimaciones menos estables; un valor pequeño genera estimaciones más suaves, pero responde más lentamente.
+
+\begin{figure}[!ht]
+  \centering
+  % Comparación del peso asignado a las observaciones pasadas
+  % para distintos valores de alpha en el promedio exponencial.
+  \caption{Influencia del parámetro $\alpha$ en el promedio exponencial.}
+\end{figure}
+
+SPN ofrece un alto rendimiento y un buen tiempo de respuesta para procesos cortos. Sin embargo, presenta dos limitaciones importantes:
+\begin{itemize}
+  \item Puede producir \textit{inanición} (\textit{starvation}) de procesos largos si continúan llegando procesos cortos.
+  \item Al ser un algoritmo no expropiativo, resulta poco adecuado para sistemas de tiempo compartido o interactivos, donde es importante que todos los procesos reciban periódicamente tiempo de CPU.
+\end{itemize}
+
+\subsubsection{Shortest Remaining Time (SRT)}
+
+La política \textit{Shortest Remaining Time (SRT)} es la versión \textit{expropiativa} de SPN. En cada decisión de planificación, se selecciona el proceso cuyo \textit{tiempo restante estimado de ejecución} sea el menor. Si llega un nuevo proceso con un tiempo restante inferior al del proceso en ejecución, este último es expropiado.
+
+Al igual que SPN, SRT requiere estimar el tiempo de servicio de los procesos y puede producir \textit{inanición} de procesos largos.
+
+Sus principales características son:
+\begin{itemize}
+  \item Reduce el tiempo de retorno promedio respecto a SPN, ya que los procesos cortos pueden ejecutarse inmediatamente aunque otro proceso esté utilizando la CPU.
+  \item No requiere interrupciones periódicas como Round Robin, aunque el sistema debe mantener actualizado el tiempo de ejecución restante de cada proceso.
+  \item Favorece a los procesos cortos, proporcionando un excelente tiempo de respuesta.
+\end{itemize}
+
+\subsubsection{Highest Response Ratio Next (HRRN)}
+
+La política \textit{Highest Response Ratio Next (HRRN)} es un algoritmo \textit{no expropiativo} que busca combinar las ventajas de SPN con un mecanismo que evite la inanición de procesos largos.
+
+Para cada proceso listo se calcula el \textit{índice de respuesta}:
+\[
+R=\frac{w+s}{s}=1+\frac{w}{s},
+\]
+donde:
+\begin{itemize}
+  \item $w$ es el tiempo de espera del proceso.
+  \item $s$ es el tiempo de servicio estimado.
+\end{itemize}
+Cuando el procesador queda disponible, se selecciona el proceso con el mayor valor de $R$.
+
+Este criterio favorece inicialmente a los procesos cortos, ya que poseen un menor tiempo de servicio. Sin embargo, a medida que un proceso permanece esperando, su tiempo de espera $w$ aumenta y, con él, también lo hace su índice de respuesta. De esta forma, incluso los procesos largos terminan siendo seleccionados, evitando la \textit{inanición}.
+
+Al igual que SPN y SRT, HRRN requiere una estimación del tiempo de servicio de cada proceso.
+
+\subsubsection{Feedback (Multilevel Feedback Queue)}
+
+La política \textit{Feedback} o \textit{Multilevel Feedback Queue (MLFQ)} se utiliza cuando no es posible estimar el tiempo de ejecución de los procesos, por lo que algoritmos como SPN, SRT o HRRN no pueden aplicarse.
+
+Este algoritmo es \textit{expropiativo} y emplea múltiples colas de prioridad. Cuando un proceso ingresa al sistema, se coloca en la cola de mayor prioridad (\(RQ_0\)). Cada vez que consume completamente su \textit{quantum} sin finalizar, es expropiado y trasladado a una cola de menor prioridad. En cambio, los procesos cortos suelen finalizar antes de descender muchos niveles, por lo que reciben un trato preferencial.
+
+Dentro de cada cola se utiliza normalmente una política FCFS o Round Robin. Los procesos que alcanzan la cola de menor prioridad permanecen en ella hasta completar su ejecución.
+
+\begin{figure}[!ht]
+  \centering
+  % Un proceso ingresa en RQ0 y, tras cada expropiación,
+  % desciende sucesivamente a RQ1, RQ2, ..., hasta la última cola.
+  \caption{Funcionamiento de un planificador de colas multinivel con realimentación.}
+\end{figure}
+
+Una mejora frecuente consiste en utilizar un \textit{quantum variable} según el nivel de prioridad. Si un proceso se ejecuta desde la cola \(RQ_i\), se le asigna un quantum
+\[
+q = 2^i,
+\]
+de modo que los procesos de menor prioridad reciben intervalos de CPU más largos, reduciendo la cantidad de cambios de contexto y mejorando el rendimiento de los procesos largos.
+
+Aun así, puede producirse \textit{inanición} si continúan llegando procesos nuevos de mayor prioridad. Para evitarlo, muchos sistemas implementan \textit{envejecimiento} (\textit{aging}), promoviendo periódicamente a los procesos que han esperado demasiado tiempo en una misma cola.
+
+\subsection{Planificación por reparto justo}
+
+Los algoritmos de planificación tradicionales consideran a todos los procesos listos como un único conjunto, sin tener en cuenta a qué usuario o aplicación pertenecen. En sistemas multiusuario, esto puede resultar poco equitativo, ya que un usuario con muchos procesos podría consumir una proporción desmedida del tiempo de CPU.
+
+La \textit{planificación por reparto justo} (\textit{Fair-Share Scheduling, FSS}) asigna a cada usuario o grupo de usuarios una \textit{cuota} (\textit{share}) de los recursos del sistema, especialmente del procesador. El objetivo es que, a largo plazo, cada usuario o grupo reciba una fracción del tiempo de CPU proporcional al peso que le fue asignado.
+
+Para tomar las decisiones de planificación, FSS utiliza una prioridad dinámica que depende de:
+\begin{itemize}
+  \item La prioridad base del proceso.
+  \item El uso reciente de CPU del proceso.
+  \item El uso reciente de CPU del grupo al que pertenece.
+  \item El peso asignado al grupo.
+\end{itemize}
+La prioridad se calcula mediante:
+\[
+P_j(i)=Base_j+\frac{CPU_j(i)}{2}+\frac{GCPU_k(i)}{4W_k},
+\]
+donde:
+\begin{itemize}
+  \item $CPU_j(i)$ representa el uso reciente de CPU del proceso.
+  \item $GCPU_k(i)$ representa el uso reciente de CPU del grupo.
+  \item $Base_j$ es la prioridad base del proceso.
+  \item $W_k$ es el peso asignado al grupo.
+\end{itemize}
+
+A medida que un proceso o su grupo consumen más tiempo de CPU, su prioridad disminuye (aumenta el valor numérico de $P_j$), permitiendo que otros usuarios reciban más tiempo de procesador. Por el contrario, los grupos con mayor peso ven reducida en menor medida su prioridad, obteniendo una mayor proporción de CPU.
+
+De esta forma, FSS evita que un usuario con muchos procesos monopolice el sistema y garantiza una distribución de recursos más equitativa entre usuarios o grupos.
+
+\begin{figure}[!ht]
+  \centering
+  % Ejemplo temporal de tres procesos pertenecientes a dos grupos,
+  % mostrando el uso acumulado de CPU, la prioridad calculada y
+  % cómo el planificador reparte aproximadamente el 50 % del tiempo
+  % de CPU a cada grupo.
+  \caption{Ejemplo de planificación mediante Fair-Share Scheduling.}
+\end{figure}

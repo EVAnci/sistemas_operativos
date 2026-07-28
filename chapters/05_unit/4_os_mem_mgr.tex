@@ -8,7 +8,7 @@ El diseño de la gestión de memoria de un sistema operativo depende de tres dec
   \item Definir las \textit{políticas y algoritmos} de gestión de memoria.
 \end{enumerate}
 
-Las dos primeras decisiones dependen del soporte del hardware, ya que la memoria virtual requiere mecanismos de traducción de direcciones. En los sistemas modernos, la memoria virtual es una característica prácticamente universal y la paginación es la técnica predominante, por lo que la mayoría de las políticas de gestión se centran en ella.
+Las dos primeras decisiones dependen del soporte del hardware, ya que la memoria virtual requiere mecanismos de traducción de direcciones (MMU). En los sistemas modernos, la memoria virtual es una característica prácticamente universal y la paginación es la técnica predominante, por lo que la mayoría de las políticas de gestión se centran en ella.
 
 El principal objetivo de estas políticas es \textit{reducir la tasa de fallos de página} (\textit{page faults}), ya que cada fallo implica una importante sobrecarga: seleccionar la página que será reemplazada, realizar operaciones de entrada/salida para intercambiar páginas y, mientras se espera dicha operación, efectuar un cambio de contexto para ejecutar otro proceso.
 
@@ -26,8 +26,6 @@ La \textit{política de carga} determina \textit{cuándo una página debe incorp
 
 La precarga puede realizarse al iniciar un proceso o cada vez que ocurre un fallo de página. La segunda alternativa resulta preferible porque es transparente para el programador y adapta la carga al comportamiento real del proceso.
 
-Es importante distinguir la \textit{precarga} del \textit{intercambio de procesos} (\textit{swapping}). En el \textit{swapping}, cuando un proceso es suspendido, todas sus páginas residentes son trasladadas al almacenamiento secundario y se restauran cuando el proceso vuelve a ejecutarse. En cambio, la precarga simplemente incorpora páginas adicionales de forma preventiva para reducir futuros fallos de página.
-
 \subsection{Política de ubicación (\textit{Placement Policy})}
 
 La \textit{política de ubicación} determina en qué parte de la memoria principal debe colocarse una porción de un proceso.
@@ -36,56 +34,67 @@ En los sistemas de \textit{segmentación pura}, esta decisión es importante y p
 
 En cambio, en los sistemas que utilizan \textit{paginación} (pura o combinada con segmentación), la ubicación suele ser irrelevante, ya que el hardware de traducción de direcciones permite acceder a cualquier combinación página--marco con la misma eficiencia.
 
-Una excepción importante aparece en los sistemas multiprocesador con \textit{acceso no uniforme a memoria (NUMA, \textit{Nonuniform Memory Access})}. En estos sistemas, toda la memoria es compartida y puede ser accedida por cualquier procesador, pero el tiempo de acceso depende de la distancia entre el procesador y el módulo de memoria correspondiente.
-
-Por ello, el rendimiento mejora cuando los datos se encuentran en módulos de memoria cercanos a los procesadores que los utilizan. En consecuencia, en arquitecturas NUMA resulta deseable una \textit{estrategia automática de ubicación} que asigne las páginas al módulo de memoria que ofrezca el mejor rendimiento.
-
 \subsection{Política de reemplazo (\textit{Replacement Policy})}
 
-La \textit{política de reemplazo} determina qué página residente debe eliminarse de la memoria principal cuando ocurre un fallo de página y es necesario cargar una nueva página.
+Cuando ocurre un fallo de página y no hay marcos libres en memoria principal, el sistema debe elegir una página residente para desalojarla y dejar lugar a la nueva. Esa decisión es responsabilidad de la política de reemplazo.
 
-Es importante distinguir esta política de la \textit{gestión del conjunto residente}, que se ocupa de:
-\begin{itemize}
-  \item Cuántos marcos de página se asignan a cada proceso.
-  \item Si el reemplazo puede realizarse únicamente sobre las páginas del proceso que produjo el fallo o sobre todas las páginas residentes del sistema.
-\end{itemize}
+Para entenderla, hay que separar dos decisiones distintas que el sistema toma en ese momento:
+\begin{enumerate}
+  \item \textbf{Gestión del conjunto residente:} define \textit{dónde} se puede reemplazar. Responde a:
+  \begin{itemize}
+    \item \textit{¿Cuántos marcos tiene cada proceso?} (política de asignación fija o variable).
+    \item \textit{¿Sobre qué procesos puedo actuar?} Si solo se pueden reemplazar páginas del proceso que provocó el fallo, el reemplazo es \textit{local}; si se puede elegir cualquier página de memoria, es \textit{global}.
+  \end{itemize}
+  Esta gestión determina el conjunto de páginas candidatas.
 
-Una vez definido el conjunto de páginas candidatas, la política de reemplazo selecciona cuál será expulsada.
+  \item \textbf{Política de reemplazo propiamente dicha:} define \textit{cuál} página de ese conjunto de candidatas será la expulsada.
+\end{enumerate}
 
-El objetivo de todas las políticas es reemplazar la página con \textit{menor probabilidad de ser utilizada en el futuro cercano}. Como el futuro no puede conocerse, la mayoría de los algoritmos aprovechan el \textit{principio de localidad} y utilizan el historial reciente de referencias para estimar cuáles páginas volverán a utilizarse.
+Idealmente, querríamos expulsar la página que tardará más en volver a usarse. Como no podemos conocer el futuro, todas las políticas intentan predecirlo a partir del pasado reciente, apoyándose en el \textit{principio de localidad}: si una página fue muy referenciada recientemente, es probable que lo siga siendo.
 
-Existe un compromiso entre rendimiento y complejidad: los algoritmos más sofisticados suelen aproximar mejor el comportamiento futuro, pero requieren mayor soporte de hardware y software.
+Esto genera un compromiso fundamental: cuanto mejor aproxima una política el comportamiento futuro, mayor es la sobrecarga de hardware y software que requiere.
 
 \subsubsection{Bloqueo de marcos (\textit{Frame Locking})}
 
-Algunos marcos de memoria pueden estar \textit{bloqueados}, por lo que las páginas que contienen \textit{no pueden ser reemplazadas}. Esto ocurre con regiones críticas del sistema, como parte del núcleo del sistema operativo, estructuras de control, buffers de entrada/salida y otras áreas sensibles al tiempo.
+No todas las páginas candidatas son reemplazables. Algunos marcos se encuentran \textit{bloqueados} y no pueden ser desalojados, por contener regiones críticas como parte del núcleo del sistema operativo, estructuras de control o buffers de E/S.
 
-El bloqueo se implementa mediante un \textit{bit de bloqueo} asociado a cada marco, almacenado normalmente en la tabla de marcos y, en algunos sistemas, también en la tabla de páginas.
+El bloqueo se implementa con un \textit{bit de bloqueo} asociado a cada marco, almacenado en la tabla de marcos y, en algunos sistemas, también en la tabla de páginas.
 
-\subsubsection{Algoritmos básicos}
+\subsubsection{Algoritmos de reemplazo}
 
-La \textit{política de reemplazo} determina qué página debe expulsarse de la memoria principal cuando ocurre un fallo de página y no existen marcos libres. El objetivo es seleccionar la página con menor probabilidad de ser utilizada en el futuro cercano, aprovechando el \textit{principio de localidad}. En general, cuanto más sofisticado es el algoritmo, mayor es la sobrecarga de implementación.
+Para implementar la política de reemplazo existen distintos algoritmos que aproximan el comportamiento ideal con diferente costo y eficacia:
 
-Los algoritmos más importantes son:
 \begin{itemize}
-  \item \textit{Óptimo (Optimal):} reemplaza la página cuya próxima referencia ocurrirá más tarde. Produce el menor número posible de fallos de página, pero es imposible de implementar porque requiere conocer el futuro. Se utiliza como referencia para evaluar otros algoritmos.
+  \item \textit{Óptimo (Optimal):} reemplaza la página cuya próxima referencia ocurrirá más tarde en el futuro. Genera el mínimo número posible de fallos, pero es irrealizable en la práctica. Se usa únicamente como cota inferior teórica para evaluar a los demás.
 
-  \item \textit{Least Recently Used (LRU):} reemplaza la página que lleva más tiempo sin ser referenciada. Se basa en que una página utilizada recientemente tiene mayor probabilidad de volver a utilizarse. Su rendimiento es cercano al algoritmo óptimo, pero requiere registrar continuamente el historial de accesos, lo que implica una elevada sobrecarga.
+  \item \textit{Least Recently Used (LRU):} reemplaza la página que lleva más tiempo sin ser referenciada. Su rendimiento es cercano al óptimo, pero exige mantener el historial de acceso ordenado por tiempo, lo que implica una alta sobrecarga.
 
-  \item \textit{First-In First-Out (FIFO):} reemplaza la página que lleva más tiempo en memoria. Es muy sencillo de implementar mediante una cola circular, pero suele ofrecer un rendimiento inferior porque puede expulsar páginas que todavía son utilizadas con frecuencia.
+  \item \textit{First-In First-Out (FIFO):} reemplaza la página que lleva más tiempo en memoria, sin considerar su uso reciente. Es muy simple de implementar con una cola circular, pero puede expulsar páginas aún muy utilizadas, con un rendimiento generalmente inferior.
 
-  \item \textit{Clock (segunda oportunidad):} aproxima el comportamiento de LRU con un costo mucho menor. Cada marco posee un \textit{bit de uso} (\textit{use bit}) que se activa cuando la página es referenciada. Los marcos se recorren de forma circular mediante un puntero:
+  \item \textit{Clock (segunda oportunidad):} es una aproximación eficiente a LRU. Cada marco posee un \textit{bit de uso} que se activa en cada referencia. Los marcos se recorren circularmente con un puntero:
   \begin{enumerate}
     \item Si el bit de uso es 0, la página se reemplaza.
-    \item Si el bit de uso es 1, se reinicia a 0 y el algoritmo continúa con el siguiente marco.
+    \item Si es 1, se pone a 0 y se le da una ``segunda oportunidad'', avanzando al siguiente marco.
   \end{enumerate}
-  De esta forma, las páginas utilizadas recientemente reciben una ``segunda oportunidad'' antes de ser reemplazadas.
 \end{itemize}
 
-\begin{figure}[H]
+\begin{figure}[!ht]
   \centering
-  % Insertar aquí una figura comparando los algoritmos
-  % Optimal, LRU, FIFO y Clock sobre una misma secuencia de referencias.
+  \begin{tikzpicture}[>=Stealth,font=\footnotesize]
+    \fill[white!96!blue!94!green] (0,0) rectangle (7.5,4);
+    \draw[->] (0,0) -- node[sloped,above=0.7cm,font=\tiny]{Fallos de pagina cada 1000 referencias} (0,4.3);
+    \draw[->] (0,0) -- node[below=0.6cm,font=\tiny]{Número de marcos asignados} (7.9,0);
+    \foreach \y in {0,5,10,15,20,25,30,35,40}{
+      \node[left] at (0,{\y/10}) {\y};
+    }
+    \foreach \x\t in {1.5/6,3/8,4.5/10,6/12,7.5/14} {
+      \node[below] at (\x,0) {\t};
+    }
+    \draw[thick] (1.5,3.7) node[left]{FIFO} -- (3,2) -- (4.5,1) -- (7.5,0.5);
+    \draw[thick] (1.5,3) node[left]{Clock} -- (3,1.6) -- (4.5,0.85) -- (7.5,0.3);
+    \draw[thick] (1.5,2.4) node[left]{LRU} -- (3,1.2) -- (4.5,0.7) -- (7.5,0.2);
+    \draw[thick] (1.5,1.5) node[left]{Optimo} -- (3,0.6) -- (4.5,0.4) -- (7.5,0.1);
+  \end{tikzpicture}
   \caption{Comparación del comportamiento de los algoritmos de reemplazo de páginas.}
 \end{figure}
 
@@ -121,15 +130,6 @@ Si un proceso vuelve a referenciar una página que permanece en alguna de estas 
 
 Además, las páginas modificadas pueden escribirse al almacenamiento secundario en bloques (\textit{clusters}) en lugar de hacerlo individualmente, reduciendo la cantidad de operaciones de entrada/salida y mejorando el rendimiento del sistema.
 
-\begin{figure}[H]
-  \centering
-  % Esquema del Page Buffering:
-  % Resident Set --> Reemplazo --> Lista de páginas libres (no modificadas)
-  %                              --> Lista de páginas modificadas
-  % Las páginas pueden volver al conjunto residente si son referenciadas.
-  \caption{Funcionamiento del búfer de páginas.}
-\end{figure}
-
 \subsubsection{Política de reemplazo y tamaño de la caché}
 
 En los sistemas modernos, el aumento del tamaño de la memoria caché hace que la política de reemplazo de páginas también influya sobre su rendimiento. Cuando una página es expulsada de la memoria principal, los bloques correspondientes almacenados en la caché también se invalidan, lo que puede incrementar la cantidad de fallos de caché.
@@ -140,15 +140,13 @@ Una estrategia adecuada de ubicación puede disminuir significativamente la cant
 
 \subsection{Gestión del conjunto residente}
 
-El \textit{conjunto residente} (\textit{resident set}) es el conjunto de páginas de un proceso que se encuentran en memoria principal en un instante determinado. Como no es necesario cargar todas las páginas de un proceso para ejecutarlo, el sistema operativo debe decidir cuántos marcos asignar a cada proceso.
+El \textit{conjunto residente} es el conjunto de páginas de un proceso que se encuentran en memoria principal en un instante determinado. Como no es necesario cargar todas las páginas de un proceso para ejecutarlo, el sistema operativo debe decidir cuántos marcos asignar a cada proceso.
 
 Esta decisión implica un compromiso:
-
 \begin{itemize}
   \item Asignar \textit{pocos marcos} permite mantener más procesos en memoria y aumenta el grado de multiprogramación, pero incrementa la probabilidad de fallos de página.
   \item Asignar \textit{muchos marcos} reduce los fallos de página; sin embargo, una vez que se satisface la localidad del proceso, agregar más memoria produce escasas mejoras.
 \end{itemize}
-
 Por este motivo, existen dos políticas principales.
 
 \subsubsection{Tamaño del conjunto residente}
@@ -168,7 +166,7 @@ Cuando no existen marcos libres, el sistema operativo debe decidir de dónde obt
 
 La asignación fija implica necesariamente un \textit{reemplazo local}, ya que el tamaño del conjunto residente permanece constante. En cambio, la asignación variable puede combinarse con reemplazo local o global, permitiendo que los procesos ganen o pierdan marcos según sus necesidades.
 
-\begin{figure}[H]
+\begin{figure}[!ht]
     \centering
     % Comparación entre:
     % - Asignación fija + reemplazo local.
@@ -211,7 +209,6 @@ El tamaño del conjunto de trabajo depende de:
   \item El parámetro \(\Delta\): cuanto mayor es la ventana de observación, mayor será el conjunto de trabajo.
   \item El instante de ejecución: cuando un proceso cambia de localidad, su conjunto de trabajo también cambia.
 \end{itemize}
-
 La estrategia basada en el conjunto de trabajo consiste en:
 \begin{enumerate}
   \item Monitorear el conjunto de trabajo de cada proceso.
@@ -220,13 +217,6 @@ La estrategia basada en el conjunto de trabajo consiste en:
 \end{enumerate}
 
 Aunque esta estrategia aprovecha eficazmente el principio de localidad, resulta difícil de implementar porque exige registrar continuamente todas las referencias a memoria y determinar un valor adecuado para \(\Delta\).
-
-\begin{figure}[H]
-  \centering
-  % Figura: evolución temporal del Working Set mostrando
-  % cómo cambia de tamaño al pasar de una localidad a otra.
-  \caption{Variación del conjunto de trabajo durante la ejecución de un proceso.}
-\end{figure}
 
 \subsubsection{Frecuencia de fallos de página (PFF)}
 
@@ -240,7 +230,7 @@ La idea es sencilla:
 
 El algoritmo PFF utiliza el tiempo transcurrido entre dos fallos de página consecutivos como una estimación de la tasa de fallos. Aunque su implementación es simple, presenta una limitación importante: durante los cambios de localidad el conjunto residente puede crecer excesivamente antes de liberar las páginas que dejaron de utilizarse.
 
-\subsubsection{Working Set Muestreado de Intervalo Variable (VSWS)}
+\subsubsection{Muestreado de Intervalo Variable (VSWS)}
 
 El algoritmo \textit{Variable-Interval Sampled Working Set (VSWS)} mejora el comportamiento de PFF mediante evaluaciones periódicas del conjunto residente.
 
@@ -280,12 +270,15 @@ Existe un compromiso importante:
 
 El \textit{thrashing} ocurre cuando la memoria principal está sobrecargada y el sistema dedica la mayor parte del tiempo a intercambiar páginas en lugar de ejecutar procesos. Como consecuencia, la utilización del procesador disminuye drásticamente.
 
-\begin{figure}[H]
+\begin{figure}[!ht]
   \centering
-  % Curva clásica:
-  % Eje X: grado de multiprogramación.
-  % Eje Y: utilización del procesador.
-  % La utilización aumenta inicialmente y luego cae debido al thrashing.
+  \begin{tikzpicture}[>=Stealth,font=\scriptsize]
+    \fill[white!96!blue!93!green] (0,0) rectangle (7,5);
+    \draw[->] (0,0) -- node[sloped,above]{Utilización de CPU} (0,5.5);
+    \draw[->] (0,0) -- node[below]{Nivel de multiprogramación} (7.5,0);
+    \draw[thick] (0,0) to[out=90,in=180] (4,4.4) to[out=0,in=170] (7,0.3);
+    \draw[dashed] (4,0) -- (4,4.4);
+  \end{tikzpicture}
   \caption{Relación entre el grado de multiprogramación y la utilización del procesador.}
 \end{figure}
 

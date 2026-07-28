@@ -1,0 +1,66 @@
+\chapter{Planificación}
+
+En un sistema multiprogramado, varios procesos residen simultáneamente en memoria principal. Mientras un proceso utiliza el procesador, los demás permanecen esperando la ocurrencia de algún evento, como la finalización de una operación de E/S. La planificación (\textit{scheduling}) permite seleccionar qué proceso se ejecutará en cada instante, manteniendo el procesador ocupado y mejorando el rendimiento del sistema.
+
+Existen cuatro tipos de planificación: planificación de largo plazo, de mediano plazo, de corto plazo y de E/S. En este capítulo se estudian únicamente los tres primeros, conocidos en conjunto como \textit{planificación del procesador}.
+
+\section{Tipos de planificación del procesador}
+
+El objetivo de la planificación del procesador es asignar procesos a uno o varios procesadores de manera que se optimicen métricas como el \textit{tiempo de respuesta}, el \textit{rendimiento} (\textit{throughput}) y la \textit{utilización del procesador}. Para ello, la planificación se divide en tres funciones, diferenciadas por la escala temporal en la que actúan:
+\begin{itemize}
+  \item \textit{Planificación de largo plazo:} decide si un proceso recién creado será admitido al conjunto de procesos activos, controlando el grado de multiprogramación.
+  \item \textit{Planificación de mediano plazo:} forma parte del mecanismo de \textit{swapping}. Determina qué procesos permanecen, al menos parcialmente, en memoria principal y cuáles son suspendidos temporalmente.
+  \item \textit{Planificación de corto plazo:} selecciona cuál de los procesos en estado \textit{Ready} utilizará el procesador a continuación. Es la función que se ejecuta con mayor frecuencia y la que más influye en el comportamiento inmediato del sistema.
+\end{itemize}
+
+\begin{figure}[!ht]
+  \centering
+  % Diagrama de transición de estados con las decisiones de planificación
+  % Largo plazo: New -> Ready
+  % Mediano plazo: Ready <-> Ready/Suspend y Blocked <-> Blocked/Suspend
+  % Corto plazo: Ready -> Running
+  \caption{Relación entre los tipos de planificación y las transiciones de estado de los procesos.}
+\end{figure}
+
+La planificación determina qué procesos progresan y cuáles deben esperar. Desde esta perspectiva, el sistema operativo administra las distintas colas de procesos con el objetivo de minimizar los tiempos de espera y optimizar el rendimiento global del sistema.
+
+\subsection{Planificación de largo plazo}
+
+La \textit{planificación de largo plazo} decide qué programas son admitidos al sistema para su ejecución, controlando el \textit{grado de multiprogramación}. Una vez admitido, un programa se convierte en un proceso y es incorporado a la cola del planificador de corto plazo; en algunos sistemas, primero se coloca en estado suspendido para ser gestionado por el planificador de mediano plazo.
+
+En sistemas por lotes, los trabajos enviados se almacenan en una cola hasta que el sistema pueda admitirlos. El planificador debe decidir:
+\begin{itemize}
+  \item Cuándo incorporar uno o más procesos nuevos.
+  \item Qué trabajos admitir.
+\end{itemize}
+
+La decisión depende principalmente del grado de multiprogramación. Si existen demasiados procesos activos, cada uno dispondrá de menos tiempo de CPU, por lo que el sistema puede limitar la admisión de nuevos procesos para mantener un rendimiento adecuado. Normalmente se incorporan nuevos trabajos cuando otros finalizan o cuando el procesador permanece inactivo durante un tiempo significativo.
+
+La selección de los trabajos puede realizarse mediante políticas simples, como \textit{First Come, First Served} (FCFS), o considerando criterios como la prioridad, el tiempo estimado de ejecución y los requerimientos de E/S, buscando un equilibrio entre procesos intensivos en CPU y en E/S.
+
+En sistemas de tiempo compartido, los usuarios autorizados pueden iniciar procesos de forma interactiva. El sistema acepta nuevas conexiones mientras no se alcance un nivel de saturación predefinido; una vez superado, las nuevas solicitudes son rechazadas temporalmente.
+
+\begin{figure}[!ht]
+  \centering
+  % Reorganización del diagrama de estados mostrando el anidamiento:
+  % Largo plazo -> Mediano plazo -> Corto plazo.
+  \caption{Niveles de planificación del procesador y su relación jerárquica.}
+\end{figure}
+
+\subsection{Planificación de mediano plazo}
+
+La \textit{planificación de mediano plazo} forma parte del mecanismo de \textit{swapping}. Su función es decidir qué procesos se cargan nuevamente en memoria principal y cuáles son suspendidos temporalmente, regulando también el grado de multiprogramación. En sistemas sin memoria virtual, esta decisión depende además de la memoria requerida por cada proceso.
+
+\subsection{Planificación de corto plazo}
+
+La \textit{planificación de corto plazo}, también denominada \textit{despachador} (o \textit{activador}), es la más frecuente de las tres. Su función consiste en seleccionar cuál de los procesos listos utilizará el procesador a continuación.
+
+Este planificador se ejecuta cada vez que ocurre un evento que puede bloquear al proceso en ejecución o permitir que otro proceso tome el procesador. Entre los eventos más importantes se encuentran:
+\begin{itemize}
+  \item Interrupciones del reloj.
+  \item Interrupciones de E/S.
+  \item Llamadas al sistema.
+  \item Señales de sincronización, como los semáforos.
+\end{itemize}
+
+\input{chapters/03_unit/1_algo_sched.tex}
