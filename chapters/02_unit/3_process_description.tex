@@ -40,63 +40,80 @@ Para administrar un proceso, el sistema operativo debe conocer dos aspectos fund
 
 \subsubsection{Ubicación e Imagen del Proceso}
 
-Un programa en disco es una entidad pasiva. Un proceso es ese mismo programa en ejecución, una entidad activa que el SO debe poder pausar, mover y reanudar. 
-
-Para ello, el SO mantiene para cada proceso su \emph{imagen del proceso}: representación concreta y completa de ese proceso en un instante dado, es decir, todo lo que el SO necesita tener guardado para poder pausarlo y reanudarlo después.
+Un programa en disco es una entidad pasiva. Un proceso es una entidad activa que el SO debe poder pausar, mover y reanudar. Para ello, el SO mantiene para cada proceso su \emph{imagen del proceso}: representación concreta y completa de ese proceso en un instante dado.
 
 La imagen del proceso se compone de:
 \begin{itemize}
-  \item Segmento de código: las instrucciones del programa.
-  \item Segmento de datos: variables globales, heap y datos del programa.
+  \item Código: las instrucciones del programa.
+  \item Datos: variables globales, heap y datos del programa.
   \item Pila: pila de usuario para llamadas a funciones y pila de kernel para llamadas al sistema.
-  \item Bloque de control (PCB): estado, contador de programa, registros y, fundamentalmente, los punteros que indican dónde está cada uno de los segmentos anteriores.
+  \item Bloque de control (PCB): estado, contador de programa, registros y, fundamentalmente, los punteros que indican dónde se encuentra cada una de las regiones anteriores.
 \end{itemize}
 
-La imagen puede no estar completamente en memoria principal: por paginación o \emph{swapping}, parte del código, datos o pila puede estar en memoria secundaria. Por este motivo, el PCB cumple el rol de \emph{descriptor central}. El PCB no solo almacena el estado del proceso, el contador de programa y los registros, sino que contiene los punteros indispensables para reconstruir el resto de la imagen. Entre ellos se destacan:
-\begin{itemize}
-  \item el puntero a la tabla de páginas o directorio de páginas del proceso, que permite localizar cada página del código, datos y pila;
-  \item los descriptores de segmento de memoria y límites de memoria asignada;
-  \item los punteros a las estructuras de archivos abiertos y recursos asignados.
-\end{itemize}
-En consecuencia, el SO no necesita conocer de antemano dónde está cada parte de la imagen: le basta con encontrar el PCB, y desde él puede localizar todo lo demás. El PCB es, por definición, la única parte de la imagen que permite acceder a todas las demás.
+\begin{figure}[!ht]
+  \centering
+  \begin{tikzpicture}[font=\scriptsize]
+    \fill[gray!15] (-.3,-.5) rectangle (5.5,4.6);
+    \fill[gray!10] (-.4,-.4) rectangle (5.4,4.7);
+    \node[below,align=center] at(2.5,4.6) {Imagen del proceso};
+    \fill[gray!20] (0,0) rectangle (5,4);
+    \draw[fill=white!94!blue!93!green] (0.5,2.5) rectangle node[text width=1.5cm,align=center]{PCB} (2,3.5);
+    \draw[fill=white] (0.5,0.5) rectangle node[text width=1.5cm,align=center]{Datos} (2,2);
+    \draw[fill=white] (3,2.5) rectangle node[text width=1.5cm,align=center]{Pila} (4.5,3.5);
+    \draw[fill=white] (3,0.5) rectangle node[text width=1.5cm,align=center]{Código} (4.5,2);
+  \end{tikzpicture}
+  \caption{Estructura lógica de la imagen de un proceso. Físicamente, el PCB reside en memoria del kernel siempre en memoria principal, mientras que el resto de las regiones puede estar disperso.}
+\end{figure}
 
-¿Cómo encuentra el sistema operativo al PCB? Este es el aspecto fundamental del mecanismo de control. A diferencia del resto de la imagen, que puede estar paginada y dispersa, el PCB tiene una ubicación privilegiada y siempre accesible. El PCB no se almacena en el espacio de usuario del proceso. Se almacena en el espacio de memoria del propio kernel, en una región \emph{residente y no paginable}. El sistema operativo mantiene el acceso al PCB de cada proceso existente en las tablas de procesos (Figura \ref{fig:os_tables}).
+La imagen del proceso puede no estar completamente en memoria principal en un instante dado\footnote{En el capítulo \ref{chpt:memoria} se estudiará en detalle el mecanismo de memoria virtual que hace esto posible, permitiendo mantener en memoria principal solo las partes necesarias en cada momento.}. Por este motivo, el PCB cumple el rol de \emph{descriptor central}, contiene la información necesaria para reconstruir la imagen.
+
+En particular, guarda dónde se encuentra cada región de la imagen ---por ejemplo, las regiones de código, datos y pila--- y los punteros hacia las estructuras que describen el resto de los recursos asignados, como los archivos abiertos.
+
+En consecuencia, el SO no necesita conocer de antemano dónde está cada parte de la imagen: le basta con encontrar el PCB, y desde él puede localizar todo lo demás. El PCB es, por definición, la única parte que permite acceder a todas las demás.
+
+¿Cómo encuentra el sistema operativo al PCB? Este es el aspecto fundamental del mecanismo de control. A diferencia del resto de la imagen, que puede estar paginada y dispersa, el PCB tiene una ubicación privilegiada y siempre accesible. El PCB no se almacena en el espacio de usuario del proceso. Se almacena en el espacio de memoria del propio kernel, en una región \emph{residente y contigua}. El sistema operativo mantiene el acceso al PCB de cada proceso existente en las tablas de procesos (Figura \ref{fig:os_tables}).
 
 Para encontrar un PCB específico, el sistema operativo puede proceder mediante dos vías:
 \begin{enumerate}
   \item Proceso en ejecución: El kernel mantiene un puntero global, usualmente denominado \texttt{current} o \texttt{running}, que apunta siempre al PCB del proceso que actualmente posee la CPU. Ante una interrupción, llamada al sistema o excepción, el hardware transfiere el control al kernel, y este ya conoce el PCB actual sin necesidad de búsqueda.
   \item Cualquier otro proceso: Para localizar un proceso diferente (por ejemplo, para planificarlo o enviarle una señal), el SO utiliza su identificador único (\emph{PID}). El PID actúa como índice o clave de búsqueda en la Tabla de Procesos, lo que devuelve inmediatamente la dirección del PCB correspondiente.
 \end{enumerate}
-En síntesis, el flujo de localización es: 
-\begin{center}
-Tabla de Procesos $\rightarrow$ PCB $\rightarrow$ Tabla de Páginas $\rightarrow$ Imagen del proceso 
-\end{center}
 El PCB es la única estructura que el sistema operativo necesita encontrar directamente; una vez hallado, toda la imagen del proceso se vuelve localizable.
 
 \subsubsection{Atributos del proceso}
 
-Toda la información que el sistema operativo necesita para administrar un proceso se almacena en el PCB. Aunque su organización depende de cada sistema operativo, su contenido puede agruparse en tres categorías principales:
+Aunque la organización exacta del PCB depende de cada sistema operativo, su contenido responde siempre a tres funciones distintas. Esta es la clasificación que ya se adelantó al presentar el concepto de proceso, ahora ilustrada en la figura \ref{fig:process_struct}.
+
 \begin{enumerate}
-  \item Identificación del proceso.
-  \item Estado del procesador.
-  \item Información de control del proceso.
+  \item \textbf{Identificación:} permite al SO distinguir al proceso y relacionarlo con otras estructuras. Incluye el identificador único (PID), el usuario propietario y las relaciones de parentesco.
+  \item \textbf{Estado del procesador:} es el contexto mínimo para poder pausar y reanudar. Incluye el contador de programa (PC), los registros de propósito general, los punteros de pila y el \emph{Program Status Word} (PSW).
+  \item \textbf{Información de control:} es todo lo que el SO necesita para administrarlo: estado de planificación, prioridad, recursos asignados como memoria y archivos abiertos, y enlaces con otros PCB.
 \end{enumerate}
-Esto mismo se ilustra en la figura \ref{fig:process_struct}.
 
 \begin{figure}[!ht]
   \centering
   \includegraphics[width=0.8\textwidth]{chapters/02_unit/media/process_struct.pdf}
-  \caption{Procesos en memoria virtual.}
+  \caption{Contenido típico del PCB agrupado según su función.}
   \label{fig:process_struct}
 \end{figure}
 
-La información de identificación incluye el identificador único del proceso (PID), utilizado por el sistema operativo para localizar el PCB y relacionarlo con otras estructuras, como las tablas de memoria, archivos o dispositivos de E/S. Además, puede contener información como el identificador del usuario propietario del proceso y las relaciones de parentesco con otros procesos (padre e hijos).
+Esta estructura conceptual se materializa de forma muy diferente según el sistema operativo.
 
-El estado del procesador corresponde al contexto de ejecución que debe preservarse durante un cambio de contexto. Incluye el contenido de los registros del procesador, como el contador de programa (PC), los registros de propósito general, los punteros de pila y el \emph{Program Status Word} (PSW), que almacena las banderas y el estado de ejecución del procesador.
+En Linux, el PCB se implementa como \texttt{task\_struct}, que puede ser consultado a continuación.
 
-Finalmente, la información de control contiene todos los datos que el sistema operativo necesita para planificar y administrar el proceso, como su estado, prioridad, recursos asignados, información de memoria, archivos abiertos, dispositivos de E/S utilizados y enlaces con otros PCB.
+\url{https://elixir.bootlin.com/linux/latest/source/include/linux/sched.h}
 
-Prácticamente todos los módulos del sistema operativo interactúan con el PCB, incluyendo el planificador, el administrador de memoria, los controladores de E/S y los manejadores de interrupciones. Debido a la importancia del PCB, el acceso al mismo debe protegerse cuidadosamente. Un error en cualquier rutina del sistema operativo podría corromper esta información e impedir la correcta administración de los procesos. Asimismo, cualquier modificación en la estructura del PCB podría afectar a numerosos módulos del sistema.
+Si se consulta su definición en el código fuente se puede ver que es una estructura grande, en torno a 8KB y con más de 150 campos según la versión del kernel, que agrupa las tres categorías: identificación con \texttt{pid} y \texttt{tgid}, estado del procesador con \texttt{thread\_struct}, e información de control con \texttt{mm\_struct}, \texttt{files\_struct} y \texttt{cred}.
+
+De hecho, al ser una estructura en memoria del kernel, es posible inspeccionarla en vivo. En la documentación oficial se muestra el caso del proceso \texttt{init} en una máquina virtual, donde mediante un debugger se modifica su campo \texttt{comm} para cambiarle el nombre en tiempo de ejecución. Es una demostración muy clara de que el PCB es una estructura de datos manipulable:
+
+\url{https://linux-kernel-labs.github.io/refs/heads/master/lectures/processes.html}
+
+En Windows, el equivalente es la estructura \texttt{EPROCESS}, perteneciente al ejecutivo del kernel. Aunque está parcialmente indocumentada, Microsoft expone su rol y sus campos principales en la documentación de drivers:
+
+\url{https://learn.microsoft.com/en-us/windows-hardware/drivers/kernel/eprocess}
+
+En ambos casos se observa la misma idea: el PCB concentra toda la información que el SO necesita. Por eso prácticamente todos los módulos ---planificador, administrador de memoria, E/S--- interactúan con él y su acceso debe estar protegido. Una corrupción en esta única estructura compromete toda la administración del proceso.
 
 \section{Control de procesos}
 
@@ -110,14 +127,14 @@ Para garantizar la protección del sistema, la mayoría de los procesadores impl
 
 La existencia de estos modos evita que un programa de usuario pueda modificar estructuras críticas del sistema operativo, como los PCBs, alterar registros de control o acceder libremente al hardware.
 
-El modo de ejecución suele almacenarse en un bit (o conjunto de bits) del \emph{Program Status Word} (PSW). Cuando ocurre una interrupción o un proceso solicita un servicio del sistema operativo mediante una llamada al sistema (\emph{system call}), el procesador cambia automáticamente al modo kernel para ejecutar el código correspondiente. Una vez finalizado el servicio, se restaura el contexto del proceso y la ejecución continúa nuevamente en modo usuario.
+El modo de ejecución suele almacenarse en un bit (o conjunto de bits) del \emph{Program Status Word} (PSW).
 
 \subsection{Creación de procesos}
 
 Cuando el SO decide crear un nuevo proceso (cualquiera sea el motivo; ver sección \ref{ssec_creac_y_fin_procesos}), sigue estos pasos:
 \begin{enumerate}
   \item Asignar un identificador único (PID) al proceso y agregar una nueva entrada en la tabla primaria de procesos.
-  \item Asignar espacio para todos los elementos de la imagen del proceso: espacio de direcciones privado (programa y datos), pila de usuario, y el bloque de control de procesoPCB.
+  \item Asignar espacio para todos los elementos de la imagen del proceso: espacio de direcciones privado (programa y datos), pila de usuario, y el PCB.
   Estos tamaños pueden fijarse por defecto, por solicitud del usuario, o ser pasados por el proceso padre si este generó al nuevo proceso. Si va a compartir espacio de direcciones existente, se configuran los enlaces correspondientes.
   \item Inicializar el PCB:
   \begin{itemize}

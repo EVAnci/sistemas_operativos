@@ -52,13 +52,13 @@ Las transiciones entre estados, que se muestran en la figura \ref{fig:five_state
 
   \item Nuevo \(\to\) Listo: el SO mueve el proceso a Listo cuando está en condiciones de admitir un proceso más.
 
-  \item Listo \(\to\) Ejecución: el \emph{scheduler} o \emph{dispatcher} elige un proceso de la cola de Listos para ejecutarlo.
+  \item Listo \(\to\) Ejecución: el despachador elige un proceso de la cola de Listos para ejecutarlo.
 
   \item Ejecución \(\to\) Salida: el SO termina el proceso en ejecución cuando este indica que finalizó o cuando aborta.
 
-  \item Ejecución \(\to\) Listo: la causa más común es que el proceso alcanzó su \emph{quantum} (tiempo máximo de ejecución ininterrumpida). Otras causas posibles son apropiación (preemption): si el SO maneja niveles de prioridad, un proceso de mayor prioridad que estaba bloqueado puede pasar a Listo al ocurrir el evento que esperaba; el SO interrumpe al proceso en ejecución (de menor prioridad) para despachar al de mayor prioridad. O bien, el proceso libera voluntariamente el procesador (por ejemplo, un proceso en segundo plano que realiza tareas periódicas de mantenimiento).
+  \item Ejecución \(\to\) Listo: la causa más común es que el proceso alcanzó su \emph{quantum} (tiempo máximo de ejecución ininterrumpida). Otras causas posibles son apropiación (preemption), por ejemplo si el SO maneja niveles de prioridad, un proceso de mayor prioridad que estaba bloqueado puede pasar a Listo al ocurrir el evento que esperaba; el SO interrumpe al proceso en ejecución (de menor prioridad) para despachar al de mayor prioridad. O bien, el proceso libera voluntariamente el procesador (por ejemplo, un proceso en segundo plano que realiza tareas periódicas de mantenimiento).
 
-  \item Ejecución \(\to\) Bloqueado: ocurre cuando el proceso solicita algo por lo cual debe esperar, típicamente mediante una llamada al sistema (\emph{system service call}). Ejemplos: pide un recurso no disponible de inmediato (archivo, memoria compartida), inicia una operación de E/S que debe completarse antes de continuar, o espera datos/mensajes de otro proceso.
+  \item Ejecución \(\to\) Bloqueado: ocurre cuando el proceso solicita algo por lo cual debe esperar, típicamente mediante una llamada al sistema.
 
   \item Bloqueado \(\to\) Listo: ocurre cuando sucede el evento por el cual el proceso estaba esperando.
 
@@ -69,8 +69,7 @@ Las transiciones entre estados, que se muestran en la figura \ref{fig:five_state
 
 Una implementación sencilla usaría solo dos colas: Listos y Bloqueados. Todo proceso admitido entra a la cola de Listos; el despachador elige de ahí el siguiente a ejecutar (FIFO\footnote{FIFO: First In First Out} si no hay prioridades). Al salir de ejecución, el proceso pasa a la cola de Listos o de Bloqueados según corresponda.
 
-El problema de esta implementación con una \'unica cola de Bloqueados es que, cuando ocurre un evento, el SO debe recorrer toda la cola buscando los procesos que esperaban específicamente ese evento --- en un sistema grande, esta cola puede tener cientos o
-miles de procesos.
+El problema de esta implementación con una única cola de Bloqueados es que, cuando ocurre un evento, el SO debe recorrer toda la cola buscando los procesos que esperaban específicamente ese evento --- en un sistema grande, esta cola puede tener cientos o miles de procesos.
 
 \begin{figure}[!ht]
   \centering
@@ -173,22 +172,6 @@ para liberar memoria, y activar (disco $\to$ memoria) para traer procesos de vue
   \end{itemize}
 \end{itemize}
 
-\subsubsection{Otros usos de la suspensión}
-
-Hasta ahora se ha utilizado la suspensión como mecanismo de intercambio a disco para liberar memoria. En general, un proceso suspendido es un proceso cuya ejecución fue congelada explícitamente por una entidad de control.
-
-Se caracteriza por:
-\begin{enumerate}
-  \item No es elegible para ejecución, esté o no en memoria principal.
-  \item Es ortogonal al bloqueo: un proceso puede estar suspendido y listo para ejecutar (Listo/Susp), o suspendido y esperando un evento (Bloqueado/Susp). Que ocurra el evento no lo vuelve ejecutable por sí solo, debe ser activado primero.
-  \item Entra y sale de ese estado por una acción explícita de control. Por regla general, solo el agente que lo suspendió puede reanudarlo: el propio proceso, su padre, el usuario, el depurador o el SO.
-\end{enumerate}
-Además de la gestión de memoria, el SO y los usuarios usan esta capacidad para:
-depuración interactiva o monitoreo,
-sospecha de interbloqueo (\emph{deadlock}),
-procesos periódicos que conviene mantener inactivos fuera de memoria,
-control padre-hijo, donde un padre suspende a sus hijos.
-
 \section{Causas de creación y terminación de procesos}
 \label{ssec_creac_y_fin_procesos}
 
@@ -203,9 +186,8 @@ Las causas más habituales de creación de un proceso son:
   \item Envío de un nuevo trabajo o envío por lotes (\emph{batch job}).
   \item Inicio de sesión de un usuario en un sistema interactivo.
   \item Creación por parte del sistema operativo para proporcionar un servicio (por ejemplo, administrar una impresión).
-  \item Creación por otro proceso (\emph{process spawning}).
+  \item Creación por otro proceso: el proceso original recibe el nombre de proceso padre, mientras que el nuevo proceso se denomina proceso hijo.
 \end{itemize}
-En los sistemas modernos es frecuente que un proceso pueda crear otros procesos. El proceso original recibe el nombre de proceso padre, mientras que el nuevo proceso se denomina proceso hijo.
 
 \subsection{Causas de terminación}
 

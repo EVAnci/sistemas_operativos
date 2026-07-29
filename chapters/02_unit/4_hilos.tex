@@ -2,8 +2,8 @@
 
 Un proceso engloba dos características independientes:
 \begin{enumerate}
-  \item Propiedad de recursos: Un proceso cuenta con un espacio de direcciones virtual que alberga su imagen (el programa, los datos, la pila y el bloque de control del proceso). Además, tiene asignados recursos como memoria, dispositivos de entrada/salida, canales y archivos. El sistema operativo se encarga de proteger estos recursos para evitar interferencias por parte de otros procesos.
-  \item Planificación y ejecución: Un proceso sigue una ruta de ejecución a través de uno o más programas. Posee un estado de ejecución (en ejecución, listo, etc.) y un nivel de prioridad, lo que permite al sistema operativo planificarlo y despacharlo.
+  \item Propiedad de recursos: Un proceso cuenta con un espacio de direcciones virtual que alberga su imagen (el programa, los datos, la pila y el bloque de control del proceso).
+  \item Planificación y ejecución: Un proceso sigue una ruta de ejecución a través de uno o más programas. Posee un estado de ejecución y un nivel de prioridad, lo que permite al sistema operativo planificarlo y despacharlo.
 \end{enumerate}
 
 Dado que estas características son independientes, muchos sistemas operativos las manejan por separado. A la unidad de ejecución se la conoce como hilo (o proceso ligero), mientras que el proceso continúa siendo la unidad de propiedad de los recursos.
@@ -17,7 +17,6 @@ Un proceso aporta:
   \item Un espacio de direcciones virtual que contiene la imagen del proceso.
   \item Acceso protegido a procesadores, archivos, recursos de entrada/salida y otros procesos.
 \end{itemize}
-
 Cada hilo dispone de:
 \begin{itemize}
   \item Su propio estado de ejecución y contexto guardado.
@@ -42,9 +41,8 @@ En sistemas multiprocesador, varios hilos de un mismo proceso pueden ejecutarse 
 Los usos habituales de los hilos incluyen:
 \begin{itemize}
   \item Separar las tareas en primer plano de las de segundo plano.
-  \item Realizar operaciones asíncronas, como copias de seguridad periódicas.
+  \item Realizar operaciones asíncronas.
   \item Superponer el procesamiento de datos con las operaciones de entrada/salida para mejorar el rendimiento global.
-  \item Simplificar el diseño de aplicaciones modulares.
 \end{itemize}
 
 La figura \ref{fig:modelo_hilos} representa la comparativa entre el modelo de proceso anteriormente visto (\emph{Single-Threaded process model}) y el modelo utilizando hilos y procesos (\emph{Multithreaded process model}).
@@ -64,25 +62,24 @@ Al igual que los procesos, los hilos poseen estados de ejecución y pueden sincr
 
 \subsubsection{Estados de los hilos}
 
-Los estados principales de un hilo son \textbf{Ejecutando} (Running), \textbf{Listo} (Ready) y \textbf{Bloqueado} (Blocked). En general, los estados de suspensión (\textit{Suspend}) se consideran conceptos propios del proceso, ya que si un proceso es suspendido o intercambiado fuera de memoria, todos sus hilos también lo son al compartir el mismo espacio de direcciones.
+Los estados principales de un hilo son \textit{Ejecutando}, \textit{Listo} y \textit{Bloqueado}. En general, los estados de suspensión se consideran conceptos propios del proceso, ya que si un proceso es suspendido o intercambiado fuera de memoria, todos sus hilos también lo son al compartir el mismo espacio de direcciones.
 
 Las principales operaciones sobre un hilo son:
 \begin{enumerate}
-  \item \textbf{Creación (Spawn):} se crea un nuevo hilo con su propio contexto de registros y pila, quedando en estado \textbf{Listo}.
-  \item \textbf{Bloqueo (Block):} el hilo espera un evento, guardando su contexto para reanudar la ejecución posteriormente.
-  \item \textbf{Desbloqueo (Unblock):} cuando ocurre el evento esperado, el hilo vuelve al estado \textbf{Listo}.
-  \item \textbf{Finalización (Finish):} al terminar su ejecución, se liberan su contexto y su pila.
+  \item \textit{Creación:} se crea un nuevo hilo con su propio contexto de registros y pila, quedando en estado \textit{Listo}.
+  \item \textit{Bloqueo:} el hilo espera un evento, guardando su contexto para reanudar la ejecución posteriormente.
+  \item \textit{Desbloqueo:} cuando ocurre el evento esperado, el hilo vuelve al estado \textit{Listo}.
+  \item \textit{Finalización:} al terminar su ejecución, se liberan su contexto y su pila.
 \end{enumerate}
 
 Un aspecto importante es determinar si el bloqueo de un hilo implica el bloqueo de todo el proceso. Si esto ocurre, los demás hilos del proceso no pueden ejecutarse, reduciendo las ventajas del multihilo. En los sistemas donde los hilos pueden bloquearse de forma independiente, mientras un hilo espera un evento, otros hilos del mismo proceso continúan ejecutándose o permanecen listos para hacerlo.
 
-En un sistema con un único procesador, varios hilos pertenecientes a distintos procesos pueden ejecutarse de forma intercalada. El cambio de ejecución ocurre cuando un hilo se bloquea o cuando finaliza su límite de tiempo (\textit{quantum}). En un sistema operativo moderno (como Linux o Windows), la cola de planificación está llena de hilos, no de procesos. Cuando el procesador termina su \textit{quantum} o un hilo se bloquea, el planificador busca el siguiente hilo en estado \textbf{Listo (Ready)} para ejecutarlo en la CPU.
+En un sistema con un único procesador, varios hilos pertenecientes a distintos procesos pueden ejecutarse de forma intercalada. El cambio de ejecución ocurre cuando un hilo se bloquea o cuando finaliza su límite de tiempo. En un sistema operativo moderno (como Linux o Windows), la cola de planificación está llena de hilos, no de procesos. Cuando el procesador termina su \textit{quantum} o un hilo se bloquea, el planificador busca el siguiente hilo en estado \textit{Listo} para ejecutarlo en la CPU.
 
 Al realizar el cambio, el kernel compara a qué proceso pertenecen el hilo saliente y el entrante, pudiendo darse dos situaciones:
 \begin{itemize}
   \item \textbf{Cambio intra-proceso (ligero):} Si ambos hilos pertenecen al mismo proceso (ej. Hilo 1 del Proceso A a Hilo 2 del Proceso A), el kernel solo conmuta el contexto del procesador: contador de programa, registros de propósito general y puntero de pila. El registro que controla la memoria virtual se mantiene igual, por lo que es una operación extremadamente rápida.
-
-  \item \textbf{Cambio inter-proceso (pesado):} Si los hilos pertenecen a procesos distintos (ej. Hilo 2 del Proceso A a Hilo 1 del Proceso B), además de conmutar registros y pila, el sistema operativo debe realizar un cambio completo de contexto de memoria para cargar las tablas de páginas del nuevo proceso y debe invalidar o re-etiquetar la caché de traducción de direcciones (\textit{Translation Lookaside Buffer}, \textbf{TLB}), lo cual implica un costo significativo de rendimiento.
+  \item \textbf{Cambio inter-proceso (pesado):} Si los hilos pertenecen a procesos distintos (ej. Hilo 2 del Proceso A a Hilo 1 del Proceso B), además de conmutar registros y pila, el sistema operativo debe realizar un cambio de proceso.
 \end{itemize}
 
 Por lo tanto, si bien la CPU reparte su tiempo de forma intercalada entre hilos de distintos procesos, cada vez que esa intercalación cruza la frontera de un proceso, el kernel debe efectuar un cambio de contexto completo, perdiendo la ventaja de velocidad del cambio ligero intra-proceso.
@@ -91,7 +88,7 @@ Por lo tanto, si bien la CPU reparte su tiempo de forma intercalada entre hilos 
 
 Todos los hilos de un proceso comparten el mismo espacio de direcciones y recursos, como archivos abiertos. Por ello, las modificaciones realizadas por un hilo son visibles para los demás, lo que hace necesaria la sincronización para evitar interferencias y corrupción de datos.
 
-Los problemas y mecanismos utilizados para sincronizar hilos son, en esencia, los mismos que se emplean para la sincronización entre procesos y se estudiarán con mayor detalle en capítulos posteriores.
+Los problemas y mecanismos utilizados para sincronizar hilos son, en esencia, los mismos que se emplean para la sincronización entre procesos y se estudiarán con mayor detalle en el capítulo \ref{chpt:concurrencia}.
 
 \section{Tipos de hilos}
 
@@ -108,7 +105,7 @@ Existen dos formas principales de implementar hilos: los \textbf{hilos de usuari
 
 \subsubsection{Hilos de usuario}
 
-En una implementación pura de ULT, toda la gestión de los hilos se realiza en espacio de usuario mediante una \textbf{biblioteca de hilos} (\textit{threads library}), mientras que el kernel desconoce la existencia de dichos hilos y únicamente administra el proceso.
+En una implementación pura de ULT, toda la gestión de los hilos se realiza en espacio de usuario mediante una \textit{biblioteca de hilos}, mientras que el kernel desconoce la existencia de dichos hilos y únicamente administra el proceso.
 
 La biblioteca de hilos proporciona las funciones necesarias para:
 \begin{itemize}
@@ -117,15 +114,14 @@ La biblioteca de hilos proporciona las funciones necesarias para:
   \item Intercambiar información entre hilos.
   \item Guardar y restaurar el contexto de ejecución.
 \end{itemize}
-Cuando un proceso crea un nuevo hilo, la biblioteca le asigna su propio contexto (registros, contador de programa y pila) y lo coloca en estado \textbf{Ready}. Los cambios de contexto entre hilos también son realizados por la biblioteca, sin intervención del kernel.
+Cuando un proceso crea un nuevo hilo, la biblioteca le asigna su propio contexto (registros, contador de programa y pila) y lo coloca en estado \textit{Listo}. Los cambios de contexto entre hilos también son realizados por la biblioteca, sin intervención del kernel.
 
-Como el kernel solo conoce al proceso, este mantiene un único estado de ejecución (\textbf{Running}, \textbf{Ready}, \textbf{Blocked}, etc.). Por ello, el planificador del sistema operativo decide qué proceso ejecutar, mientras que la biblioteca decide cuál de sus hilos utilizar.
+Como el kernel solo conoce al proceso, este mantiene un único estado de ejecución. Por ello, el planificador del sistema operativo decide qué proceso ejecutar, mientras que la biblioteca decide cuál de sus hilos utilizar.
 
 Esta organización produce algunas consecuencias importantes:
 \begin{itemize}
   \item Si un hilo realiza una llamada al sistema bloqueante, el kernel bloquea al proceso completo, impidiendo la ejecución de todos sus hilos.
   \item Si el proceso es interrumpido o pierde el procesador, todos sus hilos dejan de ejecutarse hasta que el proceso vuelva a ser planificado.
-  \item Un hilo puede bloquearse mientras otro hilo del mismo proceso continúa ejecutándose, siempre que el bloqueo sea administrado por la biblioteca de hilos y no por el kernel.
 \end{itemize}
 Las principales ventajas de los ULT son:
 \begin{enumerate}
@@ -139,11 +135,11 @@ Sus principales desventajas son:
   \item El proceso solo puede ejecutarse en un procesador a la vez, por lo que los hilos no pueden aprovechar el paralelismo de sistemas multiprocesador.
 \end{enumerate}
 
-Existen técnicas para mitigar estas limitaciones. Una de ellas es el \textbf{jacketing}, que consiste en reemplazar una llamada bloqueante por una rutina de la biblioteca que verifica si la operación puede realizarse inmediatamente. Si el recurso no está disponible, el hilo se bloquea a nivel de usuario y otro hilo del mismo proceso continúa ejecutándose.
+Existen técnicas para mitigar estas limitaciones. Una de ellas es el \textit{jacketing}, que consiste en reemplazar una llamada bloqueante por una rutina de la biblioteca que verifica si la operación puede realizarse inmediatamente. Si el recurso no está disponible, el hilo se bloquea a nivel de usuario y otro hilo del mismo proceso continúa ejecutándose.
 
 \subsubsection{Hilos de kernel}
 
-En una implementación pura de \textbf{Kernel-Level Threads (KLT)}, toda la gestión de los hilos es realizada por el kernel. Las aplicaciones únicamente utilizan una interfaz (\textit{API}) para acceder a los servicios de administración de hilos.
+En una implementación pura de \textit{Kernel-Level Threads (KLT)}, toda la gestión de los hilos es realizada por el kernel. Las aplicaciones únicamente utilizan una interfaz para acceder a los servicios de administración de hilos.
 
 El kernel mantiene información tanto del proceso como de cada uno de sus hilos y realiza la planificación a nivel de hilo. Esto elimina las principales limitaciones de los ULT:
 \begin{itemize}
