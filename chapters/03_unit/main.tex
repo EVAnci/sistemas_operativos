@@ -1,6 +1,6 @@
 \chapter{Planificación}
 
-En un sistema multiprogramado, varios procesos residen simultáneamente en memoria principal. Mientras un proceso utiliza el procesador, los demás permanecen esperando la ocurrencia de algún evento, como la finalización de una operación de E/S. La planificación (\textit{scheduling}) permite seleccionar qué proceso se ejecutará en cada instante, manteniendo el procesador ocupado y mejorando el rendimiento del sistema.
+En un sistema multiprogramado, varios procesos residen simultáneamente en memoria principal. Mientras un proceso utiliza el procesador, los demás permanecen esperando la ocurrencia de algún evento o ser seleccionados por el planificador. La planificación (\textit{scheduling}) permite seleccionar qué proceso se ejecutará en cada instante, manteniendo el procesador ocupado y mejorando el rendimiento del sistema.
 
 Existen cuatro tipos de planificación: planificación de largo plazo, de mediano plazo, de corto plazo y de E/S. En este capítulo se estudian únicamente los tres primeros, conocidos en conjunto como \textit{planificación del procesador}.
 
@@ -15,10 +15,52 @@ El objetivo de la planificación del procesador es asignar procesos a uno o vari
 
 \begin{figure}[!ht]
   \centering
-  % Diagrama de transición de estados con las decisiones de planificación
-  % Largo plazo: New -> Ready
-  % Mediano plazo: Ready <-> Ready/Suspend y Blocked <-> Blocked/Suspend
-  % Corto plazo: Ready -> Running
+  \begin{tikzpicture}[>=Stealth,font=\scriptsize]
+    \tikzset{
+      state/.style={
+        draw,
+        thin,
+        minimum width=2.1cm,
+        align=center,
+        minimum height=1.3cm,
+        shape=ellipse,
+        inner sep=0pt,
+        font=\small,
+        text=black,
+        outer color=white!85!green!85!blue,
+        inner color=white,
+        outer sep=.1cm
+      }
+    }
+    \node[state] (sready) {Listo\\Suspendido};
+    \node[state, right=1.3cm of sready] (ready) {Listo};
+    \node[state, below=2cm of ready] (blocked) {Bloqueado};
+    \node[state, right=1.3cm of ready] (run) {Ejecutando};
+    \node[state, right=1.3cm of run] (exit) {Finalizado};
+    \node[state, below=2cm of sready] (sblock) {Bloqueado\\Suspendido};
+    \path (sready.north) -- coordinate (midnew) (ready.north);
+    \node[state, above=2cm of midnew] (new) {Nuevo};
+
+    \draw[->,green!70!black] (sready.north east) -- node[above]{Activar} (ready.north west);
+    \draw[->] (ready.south west) -- node[below]{Suspender} (sready.south east);
+    \draw[->,green!50!white!40!blue] (ready.north east) -- node[above]{Despachar} (run.north west);
+    \draw[->] (run.south west) -- node[below]{Time-out} (ready.south east);
+    \draw[->] (run.east) -- node[above]{Salir} (exit.west);
+    \draw[->] (run.south) -- node[below right,text width=1cm]{Espera Evento} (blocked.north east);
+    \draw[->] (blocked.north) -- node[left,text width=1cm,align=right]{Ocurre Evento} (ready.south);
+    \draw[->,green!70!black] (sblock.north east) -- node[above]{Activar} (blocked.north west);
+    \draw[->] (blocked.south west) -- node[below]{Suspender} (sblock.south east);
+    \draw[->] (sblock.north) -- node[left,text width=1cm,align=right]{Ocurre Evento} (sready.south);
+    \draw[->,orange] (new.south west) -- node[left]{Admitir} (sready.north);
+    \draw[->,orange] (new.south east) -- node[left]{Admitir} (ready.north);
+    \draw[->,dashed] (run.north) to[out=150,in=30] node[above right]{Suspender} ($(sready.north)!0.6!(sready.north east)$);
+    \node[fill=blue!30,below=.5cm of sblock,rectangle,minimum width=.3cm,minimum height=.3cm] (R1) {};
+    \node[fill=green!50!gray!70,below=.1cm of R1,rectangle,minimum width=.3cm,minimum height=.3cm] (R2) {};
+    \node[fill=orange!50,below=.1cm of R2,rectangle,minimum width=.3cm,minimum height=.3cm] (R3) {};
+    \node[right=1pt of R1] {Corto plazo};
+    \node[right=1pt of R2] {Medio plazo};
+    \node[right=1pt of R3] {Largo plazo};
+  \end{tikzpicture}
   \caption{Relación entre los tipos de planificación y las transiciones de estado de los procesos.}
 \end{figure}
 
@@ -42,8 +84,43 @@ En sistemas de tiempo compartido, los usuarios autorizados pueden iniciar proces
 
 \begin{figure}[!ht]
   \centering
-  % Reorganización del diagrama de estados mostrando el anidamiento:
-  % Largo plazo -> Mediano plazo -> Corto plazo.
+  \begin{tikzpicture}[>=Stealth,font=\scriptsize,scale=0.8]
+    \tikzset{
+      state/.style={
+        draw,
+        thin,
+        minimum width=2.1cm,
+        align=center,
+        minimum height=1.3cm,
+        shape=ellipse,
+        inner sep=0pt,
+        font=\small,
+        text=black,
+        outer color=white!85!green!85!blue,
+        inner color=white,
+        outer sep=.1cm
+      }
+    }
+    \node[state] (run) at(0,0) {Ejecutando};
+    \node[state, below=.2cm of run] (ready) {Listo};
+    \node[state, below=.2cm of ready] (blocked) {Bloqueado};
+    \node[state, right=.5cm of run] (sblock) {Bloqueado\\Suspendido};
+    \node[state, right=.5cm of blocked] (sready) {Listo\\Suspendido};
+    \node[state, right=1cm of sready] (exit) {Finalizado};
+    \node[state, right=1cm of sblock] (new) {Nuevo};
+
+    \begin{scope}[on background layer]
+        \node[draw, rectangle, fill=orange!30, fit=(run) (ready) (blocked) (new) (exit), inner sep=0.7cm, rounded corners=5pt] (wrapper) {};
+        \node[draw, rectangle, fill=green!70!black!20, fit=(run) (ready) (blocked) (sblock) (sready), inner sep=0.5cm, rounded corners=5pt] (wrapper) {};
+        \node[draw, rectangle, fill=blue!10, fit=(run) (ready) (blocked), inner sep=0.3cm, rounded corners=5pt] (wrapper) {};
+    \end{scope}
+    \node[fill=blue!30,below=1cm of blocked,rectangle,minimum width=.3cm,minimum height=.3cm] (R1) {};
+    \node[fill=green!50!gray!70,right=2cm of R1,rectangle,minimum width=.3cm,minimum height=.3cm] (R2) {};
+    \node[fill=orange!50,right=2cm of R2,rectangle,minimum width=.3cm,minimum height=.3cm] (R3) {};
+    \node[right=1pt of R1] {Corto plazo};
+    \node[right=1pt of R2] {Medio plazo};
+    \node[right=1pt of R3] {Largo plazo};
+  \end{tikzpicture}
   \caption{Niveles de planificación del procesador y su relación jerárquica.}
 \end{figure}
 

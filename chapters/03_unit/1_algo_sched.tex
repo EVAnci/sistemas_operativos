@@ -26,9 +26,7 @@ En lugar de una única cola de procesos listos, el sistema mantiene varias colas
 
 \begin{figure}[!ht]
   \centering
-  % Conjunto de colas Ready ordenadas por prioridad:
-  % RQ0 (máxima prioridad), RQ1, ..., RQn.
-  % El planificador recorre las colas desde la mayor hasta la menor prioridad.
+  \includegraphics[width=.8\textwidth]{chapters/03_unit/media/queue_priority.pdf}
   \caption{Planificación mediante múltiples colas de prioridad.}
 \end{figure}
 
@@ -54,39 +52,58 @@ Según el modo de decisión, los algoritmos se clasifican en:
 \end{itemize}
 Los algoritmos expropiativos suelen ofrecer un mejor tiempo de respuesta y evitan que un proceso monopolice el procesador, aunque introducen un mayor costo debido a los cambios de contexto.
 
-\begin{table}[!ht]
+\begin{sidewaystable}[!ht]
 \centering
+\renewcommand{\arraystretch}{1.5} 
 \caption{Comparación de las principales políticas de planificación.}
-\begin{tabular}{|p{3.2cm}|c|c|c|c|c|c|}
-\hline
+\vspace{0.2cm} 
+% Ajusté un poco el ancho de la primera columna a 2.5cm para dar más espacio a las demás
+\begin{tabularx}{\textwidth}{@{} >{\raggedright\arraybackslash}p{2.5cm} *{6}{>{\centering\arraybackslash}X} @{}}
+\toprule
 \textit{Característica} & \textit{FCFS} & \textit{RR} & \textit{SPN} & \textit{SRT} & \textit{HRRN} & \textit{Feedback} \\
-\hline
+\midrule
 Función de selección & \(\max(w)\) & Constante & \(\min(s)\) & \(\min(s-e)\) & \(\max\left(\frac{w+s}{s}\right)\) & Variable \\
-\hline
 Modo & No expropiativo & Expropiativo & No expropiativo & Expropiativo & No expropiativo & Expropiativo \\
-\hline
 Rendimiento (\textit{Throughput}) & Medio & Depende del quantum & Alto & Alto & Alto & Medio \\
-\hline
 Tiempo de respuesta & Alto para procesos largos & Bueno & Bueno para procesos cortos & Bueno & Bueno & Variable \\
-\hline
 Sobrecarga & Baja & Baja & Alta & Alta & Alta & Alta \\
-\hline
 Efecto principal & Perjudica procesos cortos & Trato equitativo & Perjudica procesos largos & Perjudica procesos largos & Buen equilibrio & Favorece procesos de E/S \\
-\hline
 Inanición & No & No & Sí & Sí & No & Sí \\
-\hline
-\end{tabular}
-\end{table}
+\bottomrule
+\end{tabularx}
+\end{sidewaystable}
 
 Para evaluar una política de planificación suele utilizarse el \textit{tiempo de retorno} (\textit{Turnaround Time, TAT}), que representa el tiempo total que un proceso permanece en el sistema:
 \[
   TAT = \text{Tiempo de espera} + \text{Tiempo de servicio}.
 \]
+
+\clearpage
+
 También es frecuente utilizar el \textit{tiempo de retorno normalizado}, definido como
 \[
 TAT_N = \frac{TAT}{s},
 \]
 el cual mide el retraso relativo experimentado por un proceso. Su valor mínimo es \(1\), correspondiente al caso ideal en que el proceso nunca debe esperar; valores mayores indican una peor calidad del servicio.
+
+Para visualizar cada algoritmo se utilizará un diagrama ejemplificando cómo se ejecutan los procesos del cuadro \ref{tab:pr_ej}.
+
+\begin{table}
+  \centering
+  \begin{tabular}{c|c|c}
+    Proceso & Tiempo de ejecución & Tiempo de llegada \\ 
+    \hline
+    \textbf{A} & 3 & 0 \\ 
+    \color{green!60!black} \textbf{B} & 6 & 2 \\ 
+    \color{blue!60!red} \textbf{C} & 4 & 4 \\ 
+    \color{red!70!black} \textbf{D} & 5 & 6 \\ 
+    \color{blue!60} \textbf{E} & 2 & 8 \\ 
+    \hline
+    Total & 20 & -
+  \end{tabular}
+  \caption{Procesos de ejemplo}
+  \label{tab:pr_ej}
+\end{table}
 
 \subsubsection{First-Come, First-Served (FCFS)}
 
@@ -97,6 +114,31 @@ FCFS es una política \textit{no expropiativa} y resulta simple de implementar, 
   \item Favorece a los procesos largos frente a los cortos. Si un proceso de larga duración obtiene primero el procesador, los procesos cortos que llegan después deberán esperar hasta que este termine, aumentando considerablemente su tiempo de retorno normalizado.
   \item Favorece a los procesos intensivos en CPU frente a los intensivos en E/S. Mientras un proceso de CPU monopoliza el procesador, los procesos de E/S permanecen esperando para continuar su ejecución, lo que puede provocar que tanto el procesador como los dispositivos de E/S permanezcan ociosos en distintos momentos, reduciendo la eficiencia global del sistema.
 \end{itemize}
+
+\begin{figure}[!ht]
+  \centering
+  \begin{tikzpicture}
+    \foreach \x in {0,5,10,15} {
+      \draw ({\x/2},0) -- ({\x/2},3.4) node[above]{\x};
+      \foreach \t in {1,2,3,4} {
+        \draw[dashed] ({(\x/2+\t/2},0) -- ({\x/2+\t/2},3.4);
+      }
+    }
+    \draw (10,0) -- (10,3.4) node[above]{20};
+    \draw (0,3) -- (10,3);
+
+    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+      \node[left,color=\c] at(0,\y) {\t};
+    }
+
+    \draw[fill=yellow!6,very thick] (0,2.5) rectangle ({3/2},2);
+    \draw[green!60!black,fill=yellow!6,very thick] ({3/2},2) rectangle ({9/2},1.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] ({9/2},1.5) rectangle ({13/2},1);
+    \draw[red,fill=yellow!6,very thick] ({13/2},1) rectangle (9,.5);
+    \draw[blue,fill=yellow!6,very thick] (9,.5) rectangle (10,0);
+  \end{tikzpicture}
+  \caption{Ejemplo de ejecución de procesos usando FCFS.}
+\end{figure}
 
 Debido a estas limitaciones, FCFS rara vez se utiliza como política única en sistemas modernos. No obstante, suele emplearse dentro de cada nivel de prioridad en planificadores con múltiples colas, aprovechando su simplicidad para ordenar los procesos que poseen la misma prioridad.
 
@@ -112,10 +154,40 @@ El parámetro más importante de este algoritmo es el \textit{tamaño del quantu
 
 \begin{figure}[!ht]
   \centering
-  % Comparación del efecto de distintos valores del quantum sobre
-  % el tiempo de respuesta. A menor quantum, mayor capacidad de respuesta
-  % pero también mayor cantidad de cambios de contexto.
-  \caption{Influencia del tamaño del quantum en el tiempo de respuesta y la sobrecarga.}
+  \begin{tikzpicture}
+    \foreach \x in {0,5,10,15} {
+      \draw ({\x/2},0) -- ({\x/2},3.4) node[above]{\x};
+      \foreach \t in {1,2,3,4} {
+        \draw[dashed] ({(\x/2+\t/2},0) -- ({\x/2+\t/2},3.4);
+      }
+    }
+    \draw (10,0) -- (10,3.4) node[above]{20};
+    \draw (0,3) -- (10,3);
+
+    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+      \node[left,color=\c] at(0,\y) {\t};
+    }
+
+    \draw[fill=yellow!6,very thick] (0,2.5) rectangle (1,2);
+    \draw[green!60!black,fill=yellow!6,very thick] (1,2) rectangle ({3/2},1.5);
+    \draw[fill=yellow!6,very thick] ({3/2},2.5) rectangle (2,2);
+    \draw[green!60!black,fill=yellow!6,very thick] (2,2) rectangle ({5/2},1.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] ({5/2},1.5) rectangle (3,1);
+    \draw[green!60!black,fill=yellow!6,very thick] (3,2) rectangle ({7/2},1.5);
+    \draw[red,fill=yellow!6,very thick] ({7/2},1) rectangle (4,.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] (4,1.5) rectangle ({9/2},1);
+    \draw[green!60!black,fill=yellow!6,very thick] ({9/2},2) rectangle (5,1.5);
+    \draw[blue,fill=yellow!6,very thick] (5,.5) rectangle ({11/2},0);
+    \draw[red,fill=yellow!6,very thick] ({11/2},1) rectangle (6,.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] (6,1.5) rectangle ({13/2},1);
+    \draw[green!60!black,fill=yellow!6,very thick] ({13/2},2) rectangle (7,1.5);
+    \draw[blue,fill=yellow!6,very thick] (7,.5) rectangle ({15/2},0);
+    \draw[red,fill=yellow!6,very thick] ({15/2},1) rectangle (8,.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] (8,1.5) rectangle ({17/2},1);
+    \draw[green!60!black,fill=yellow!6,very thick] ({17/2},2) rectangle (9,1.5);
+    \draw[red,fill=yellow!6,very thick] (9,1) rectangle (10,.5);
+  \end{tikzpicture}
+  \caption{Ejemplo de ejecución de procesos usando RR con \(q=1\).}
 \end{figure}
 
 Round Robin es especialmente adecuado para sistemas de \textit{tiempo compartido} e interactivos, ya que garantiza que todos los procesos reciban periódicamente tiempo de CPU.
@@ -136,9 +208,9 @@ S_{n+1}=\alpha T_n+(1-\alpha)S_n,\qquad 0<\alpha<1
 \]
 donde:
 \begin{itemize}
-  \item $T_n$ es la duración de la última ráfaga de CPU observada.
-  \item $S_n$ es la estimación anterior.
-  \item $\alpha$ determina cuánto influyen las observaciones recientes.
+  \item \(T_n\) es la duración de la última ráfaga de CPU observada.
+  \item \(S_n\) es la estimación anterior.
+  \item \(\alpha\) determina cuánto influyen las observaciones recientes.
 \end{itemize}
 Al desarrollar la expresión se obtiene:
 \[
@@ -148,13 +220,31 @@ S_{n+1}
 +(1-\alpha)^2\alpha T_{n-2}
 +\cdots
 \]
-Por lo tanto, las observaciones más recientes tienen mayor influencia sobre la estimación, mientras que el peso de las más antiguas decrece exponencialmente. Un valor grande de $\alpha$ permite adaptarse rápidamente a cambios en el comportamiento del proceso, aunque produce estimaciones menos estables; un valor pequeño genera estimaciones más suaves, pero responde más lentamente.
+Por lo tanto, las observaciones más recientes tienen mayor influencia sobre la estimación, mientras que el peso de las más antiguas decrece exponencialmente. Un valor grande de \(\alpha\) permite adaptarse rápidamente a cambios en el comportamiento del proceso, aunque produce estimaciones menos estables; un valor pequeño genera estimaciones más suaves, pero responde más lentamente.
 
 \begin{figure}[!ht]
   \centering
-  % Comparación del peso asignado a las observaciones pasadas
-  % para distintos valores de alpha en el promedio exponencial.
-  \caption{Influencia del parámetro $\alpha$ en el promedio exponencial.}
+  \begin{tikzpicture}
+    \foreach \x in {0,5,10,15} {
+      \draw ({\x/2},0) -- ({\x/2},3.4) node[above]{\x};
+      \foreach \t in {1,2,3,4} {
+        \draw[dashed] ({(\x/2+\t/2},0) -- ({\x/2+\t/2},3.4);
+      }
+    }
+    \draw (10,0) -- (10,3.4) node[above]{20};
+    \draw (0,3) -- (10,3);
+
+    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+      \node[left,color=\c] at(0,\y) {\t};
+    }
+
+    \draw[fill=yellow!6,very thick] (0,2.5) rectangle ({3/2},2);
+    \draw[green!60!black,fill=yellow!6,very thick] ({3/2},2) rectangle ({9/2},1.5);
+    \draw[blue,fill=yellow!6,very thick] ({9/2},.5) rectangle ({11/2},0);
+    \draw[blue!50!red,fill=yellow!6,very thick] ({11/2},1.5) rectangle ({15/2},1);
+    \draw[red,fill=yellow!6,very thick] ({15/2},1) rectangle (10,.5);
+  \end{tikzpicture}
+  \caption{Ejemplo de ejecución de procesos usando SPN.}
 \end{figure}
 
 SPN ofrece un alto rendimiento y un buen tiempo de respuesta para procesos cortos. Sin embargo, presenta dos limitaciones importantes:
@@ -176,6 +266,32 @@ Sus principales características son:
   \item Favorece a los procesos cortos, proporcionando un excelente tiempo de respuesta.
 \end{itemize}
 
+\begin{figure}[!ht]
+  \centering
+  \begin{tikzpicture}
+    \foreach \x in {0,5,10,15} {
+      \draw ({\x/2},0) -- ({\x/2},3.4) node[above]{\x};
+      \foreach \t in {1,2,3,4} {
+        \draw[dashed] ({(\x/2+\t/2},0) -- ({\x/2+\t/2},3.4);
+      }
+    }
+    \draw (10,0) -- (10,3.4) node[above]{20};
+    \draw (0,3) -- (10,3);
+
+    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+      \node[left,color=\c] at(0,\y) {\t};
+    }
+
+    \draw[fill=yellow!6,very thick] (0,2.5) rectangle ({3/2},2);
+    \draw[green!60!black,fill=yellow!6,very thick] ({3/2},2) rectangle (2,1.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] (2,1.5) rectangle (4,1);
+    \draw[blue,fill=yellow!6,very thick] (4,.5) rectangle (5,0);
+    \draw[green!60!black,fill=yellow!6,very thick] (5,2) rectangle ({15/2},1.5);
+    \draw[red,fill=yellow!6,very thick] ({15/2},1) rectangle (10,.5);
+  \end{tikzpicture}
+  \caption{Ejemplo de ejecución de procesos usando SRT.}
+\end{figure}
+
 \subsubsection{Highest Response Ratio Next (HRRN)}
 
 La política \textit{Highest Response Ratio Next (HRRN)} es un algoritmo \textit{no expropiativo} que busca combinar las ventajas de SPN con un mecanismo que evite la inanición de procesos largos.
@@ -186,14 +302,39 @@ R=\frac{w+s}{s}=1+\frac{w}{s},
 \]
 donde:
 \begin{itemize}
-  \item $w$ es el tiempo de espera del proceso.
-  \item $s$ es el tiempo de servicio estimado.
+  \item \(w\) es el tiempo de espera del proceso.
+  \item \(s\) es el tiempo de servicio estimado.
 \end{itemize}
-Cuando el procesador queda disponible, se selecciona el proceso con el mayor valor de $R$.
+Cuando el procesador queda disponible, se selecciona el proceso con el mayor valor de \(R\).
 
-Este criterio favorece inicialmente a los procesos cortos, ya que poseen un menor tiempo de servicio. Sin embargo, a medida que un proceso permanece esperando, su tiempo de espera $w$ aumenta y, con él, también lo hace su índice de respuesta. De esta forma, incluso los procesos largos terminan siendo seleccionados, evitando la \textit{inanición}.
+Este criterio favorece inicialmente a los procesos cortos, ya que poseen un menor tiempo de servicio. Sin embargo, a medida que un proceso permanece esperando, su tiempo de espera \(w\) aumenta y, con él, también lo hace su índice de respuesta. De esta forma, incluso los procesos largos terminan siendo seleccionados, evitando la \textit{inanición}.
 
 Al igual que SPN y SRT, HRRN requiere una estimación del tiempo de servicio de cada proceso.
+
+\begin{figure}[!ht]
+  \centering
+  \begin{tikzpicture}
+    \foreach \x in {0,5,10,15} {
+      \draw ({\x/2},0) -- ({\x/2},3.4) node[above]{\x};
+      \foreach \t in {1,2,3,4} {
+        \draw[dashed] ({(\x/2+\t/2},0) -- ({\x/2+\t/2},3.4);
+      }
+    }
+    \draw (10,0) -- (10,3.4) node[above]{20};
+    \draw (0,3) -- (10,3);
+
+    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+      \node[left,color=\c] at(0,\y) {\t};
+    }
+
+    \draw[fill=yellow!6,very thick] (0,2.5) rectangle ({3/2},2);
+    \draw[green!60!black,fill=yellow!6,very thick] ({3/2},2) rectangle ({9/2},1.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] ({9/2},1.5) rectangle ({13/2},1);
+    \draw[blue,fill=yellow!6,very thick] ({13/2},.5) rectangle ({15/2},0);
+    \draw[red,fill=yellow!6,very thick] ({15/2},1) rectangle (10,.5);
+  \end{tikzpicture}
+  \caption{Ejemplo de ejecución de procesos usando HRRN.}
+\end{figure}
 
 \subsubsection{Feedback (Multilevel Feedback Queue)}
 
@@ -205,9 +346,41 @@ Dentro de cada cola se utiliza normalmente una política FCFS o Round Robin. Los
 
 \begin{figure}[!ht]
   \centering
-  % Un proceso ingresa en RQ0 y, tras cada expropiación,
-  % desciende sucesivamente a RQ1, RQ2, ..., hasta la última cola.
-  \caption{Funcionamiento de un planificador de colas multinivel con realimentación.}
+  \begin{tikzpicture}
+    \foreach \x in {0,5,10,15} {
+      \draw ({\x/2},0) -- ({\x/2},3.4) node[above]{\x};
+      \foreach \t in {1,2,3,4} {
+        \draw[dashed] ({(\x/2+\t/2},0) -- ({\x/2+\t/2},3.4);
+      }
+    }
+    \draw (10,0) -- (10,3.4) node[above]{20};
+    \draw (0,3) -- (10,3);
+
+    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+      \node[left,color=\c] at(0,\y) {\t};
+    }
+
+    \draw[fill=yellow!6,very thick] (0,2.5) rectangle (1,2);
+    \draw[green!60!black,fill=yellow!6,very thick] (1,2) rectangle ({3/2},1.5);
+    \draw[fill=yellow!6,very thick] ({3/2},2.5) rectangle (2,2);
+    \draw[blue!50!red,fill=yellow!6,very thick] (2,1.5) rectangle ({5/2},1);
+    \draw[green!60!black,fill=yellow!6,very thick] ({5/2},2) rectangle (3,1.5);
+    \draw[red,fill=yellow!6,very thick] (3,1) rectangle ({7/2},.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] ({7/2},1.5) rectangle (4,1);
+    \draw[blue,fill=yellow!6,very thick] (4,.5) rectangle ({9/2},0);
+    \draw[red,fill=yellow!6,very thick] ({9/2},1) rectangle (5,.5);
+    \draw[blue,fill=yellow!6,very thick] (5,.5) rectangle ({11/2},0);
+    \draw[green!60!black,fill=yellow!6,very thick] ({11/2},2) rectangle (6,1.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] (6,1.5) rectangle ({13/2},1);
+    \draw[red,fill=yellow!6,very thick] ({13/2},1) rectangle (7,.5);
+    \draw[green!60!black,fill=yellow!6,very thick] (7,2) rectangle ({15/2},1.5);
+    \draw[blue!50!red,fill=yellow!6,very thick] ({15/2},1.5) rectangle (8,1);
+    \draw[red,fill=yellow!6,very thick] (8,1) rectangle ({17/2},.5);
+    \draw[green!60!black,fill=yellow!6,very thick] ({17/2},2) rectangle (9,1.5);
+    \draw[red,fill=yellow!6,very thick] (9,1) rectangle ({19/2},.5);
+    \draw[green!60!black,fill=yellow!6,very thick] ({19/2},2) rectangle (10,1.5);
+  \end{tikzpicture}
+  \caption{Ejemplo de ejecución de procesos usando FCFS.}
 \end{figure}
 
 Una mejora frecuente consiste en utilizar un \textit{quantum variable} según el nivel de prioridad. Si un proceso se ejecuta desde la cola \(RQ_i\), se le asigna un quantum
@@ -237,21 +410,19 @@ P_j(i)=Base_j+\frac{CPU_j(i)}{2}+\frac{GCPU_k(i)}{4W_k},
 \]
 donde:
 \begin{itemize}
-  \item $CPU_j(i)$ representa el uso reciente de CPU del proceso.
-  \item $GCPU_k(i)$ representa el uso reciente de CPU del grupo.
-  \item $Base_j$ es la prioridad base del proceso.
-  \item $W_k$ es el peso asignado al grupo.
+  \item \(CPU_j(i)\) representa el uso reciente de CPU del proceso.
+  \item \(GCPU_k(i)\) representa el uso reciente de CPU del grupo.
+  \item \(Base_j\) es la prioridad base del proceso.
+  \item \(W_k\) es el peso asignado al grupo.
 \end{itemize}
 
-A medida que un proceso o su grupo consumen más tiempo de CPU, su prioridad disminuye (aumenta el valor numérico de $P_j$), permitiendo que otros usuarios reciban más tiempo de procesador. Por el contrario, los grupos con mayor peso ven reducida en menor medida su prioridad, obteniendo una mayor proporción de CPU.
-
-De esta forma, FSS evita que un usuario con muchos procesos monopolice el sistema y garantiza una distribución de recursos más equitativa entre usuarios o grupos.
+A medida que un proceso o su grupo consumen más tiempo de CPU, su prioridad disminuye (aumenta el valor numérico de \(P_j\)), permitiendo que otros usuarios reciban más tiempo de procesador. Por el contrario, los grupos con mayor peso ven reducida en menor medida su prioridad, obteniendo una mayor proporción de CPU.
 
 \begin{figure}[!ht]
   \centering
-  % Ejemplo temporal de tres procesos pertenecientes a dos grupos,
-  % mostrando el uso acumulado de CPU, la prioridad calculada y
-  % cómo el planificador reparte aproximadamente el 50 % del tiempo
-  % de CPU a cada grupo.
+  \includegraphics[width=0.8\textwidth]{chapters/03_unit/media/fair_share.pdf}
   \caption{Ejemplo de planificación mediante Fair-Share Scheduling.}
 \end{figure}
+
+De esta forma, FSS evita que un usuario con muchos procesos monopolice el sistema y garantiza una distribución de recursos más equitativa entre usuarios o grupos.
+

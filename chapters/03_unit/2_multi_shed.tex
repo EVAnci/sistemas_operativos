@@ -2,7 +2,7 @@
 
 En las siguientes secciones se estudia la planificación en sistemas con múltiples procesadores y múltiples núcleos. Primero se analizan los problemas de planificación en multiprocesadores, considerando tanto procesos como hilos. Posteriormente se introduce la planificación en sistemas de tiempo real (RTOS), incluyendo las características de los procesos de tiempo real y algoritmos como \textit{Deadline Scheduling} y \textit{Rate Monotonic Scheduling}.
 
-\subsection{Planificación en Multiprocesadores y Multinúcleo}
+\subsection{En Multiprocesadores y Multinúcleo}
 
 La presencia de múltiples procesadores introduce nuevos desafíos para el planificador del sistema operativo. Dependiendo de la organización del hardware, los multiprocesadores pueden clasificarse en:
 \begin{itemize}
@@ -32,12 +32,6 @@ Una aplicación se divide en múltiples hilos dentro de un mismo proceso. Los hi
 \paragraph{Paralelismo de granularidad fina}
 
 Representa el mayor nivel de paralelismo y sincronización. Las tareas interactúan continuamente, por lo que la planificación es considerablemente más compleja y suele requerir técnicas especializadas de programación paralela.
-
-\begin{figure}[!ht]
-  \centering
-  % Tabla o esquema de los niveles de granularidad
-  \caption{Clasificación del paralelismo según la frecuencia de sincronización: independiente, muy gruesa, gruesa, media y fina. A medida que aumenta la frecuencia de sincronización, también aumenta la complejidad de la planificación.}
-\end{figure}
 
 \subsection{Aspectos de Diseño}
 
@@ -70,12 +64,6 @@ Existen dos arquitecturas principales para coordinar la planificación:
 
 En la práctica existen soluciones intermedias, como dedicar varios procesadores a tareas del núcleo o diferenciar el tratamiento de procesos del sistema y de usuario mediante prioridades y políticas de planificación.
 
-\begin{figure}[!ht]
-    \centering
-    % Esquema comparativo entre planificación maestro-esclavo y peer.
-    \caption{Comparación entre las arquitecturas de planificación \textit{master/slave} y \textit{peer}. En la primera, un único procesador controla la planificación; en la segunda, todos los procesadores pueden ejecutar el núcleo y planificar procesos de forma coordinada.}
-\end{figure}
-
 \subsubsection{Uso de la multiprogramación en cada procesador}
 
 Cuando un proceso permanece asignado al mismo procesador durante toda su ejecución, surge la pregunta de si dicho procesador debe ejecutar varios procesos mediante multiprogramación.
@@ -100,7 +88,29 @@ Como consecuencia, algoritmos sencillos como \textit{FCFS} o \textit{FCFS con pr
 
 \begin{figure}[!ht]
   \centering
-  % Figura basada en la Figura 10.1 del libro.
+  \begin{subfigure}[c]{0.45\textwidth}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize]
+      \fill[white!95!blue!93!green] (0,0) rectangle (4,4);
+      \draw[->] (0,0) -- node[below]{Coeficiente de variación} (4.2,0);
+      \draw[->] (0,0) -- node[above,sloped]{Razón de rendimiento RR a FCFS} (0,4.2);
+      \draw (0.8,0.3) to[out=30,in=180] (3.9,1) node[right,text width=1.4cm]{Único\\procesador};
+      \draw (0.8,0.1) to[out=60,in=190] (3.9,2.7) node[right,text width=1.4cm]{Doble\\procesador};
+    \end{tikzpicture}
+    \caption{Comparación de RR y FCFS.}
+  \end{subfigure}
+  \hspace{5mm}
+  \begin{subfigure}[c]{0.45\textwidth}
+    \centering
+    \begin{tikzpicture}[font=\scriptsize]
+      \fill[white!95!blue!93!green] (0,0) rectangle (4,4);
+      \draw[->] (0,0) -- node[below]{Coeficiente de variación} (4.2,0);
+      \draw[->] (0,0) -- node[above,sloped]{Razón de rendimiento SRT a FCFS} (0,4.2);
+      \draw (0.8,0.2) to[out=40,in=180] (3.9,1.3) node[right,text width=1.4cm]{Único\\procesador};
+      \draw (0.8,0.5) to[out=70,in=190] (3.9,3.8) node[right,text width=1.4cm]{Doble\\procesador};
+    \end{tikzpicture}
+    \caption{Comparación de SRT y FCFS.}
+  \end{subfigure}
   \caption{Comparación del rendimiento de distintos algoritmos de planificación en sistemas con uno y varios procesadores. A medida que aumenta el número de procesadores, las diferencias entre algoritmos como FCFS y Round Robin disminuyen, haciendo que políticas simples sean suficientes en muchos casos.}
 \end{figure}
 
@@ -146,12 +156,6 @@ Las principales desventajas de \textit{Load Sharing} son:
 
 Una variante consiste en mantener una cola local para cada procesador y una cola global compartida. Cada procesador consulta primero su cola local, reservada para hilos vinculados a dicho procesador, y luego la cola global. Esta organización mejora la localidad de referencia y facilita la implementación de técnicas como la planificación por grupos.
 
-\begin{figure}[!ht]
-    \centering
-    % Esquema de Load Sharing.
-    \caption{Planificación mediante \textit{Load Sharing}. Todos los procesadores extraen hilos de una cola global de listos. Algunas implementaciones incorporan colas locales para mejorar la localidad de caché y reducir la contención sobre la cola compartida.}
-\end{figure}
-
 \subsubsection{Planificación por grupos}
 
 La \textit{planificación por grupos} (Gang Scheduling) consiste en ejecutar simultáneamente, en distintos procesadores, todos los hilos relacionados de una misma aplicación. Esta técnica es especialmente útil en aplicaciones con paralelismo de granularidad media o fina, donde los hilos requieren una sincronización frecuente.
@@ -171,7 +175,7 @@ Una alternativa más eficiente consiste en asignar tiempo de procesador de forma
 
 \begin{figure}[!ht]
   \centering
-  % Basada en la Figura 10.2
+  \includegraphics[width=0.7\textwidth]{chapters/03_unit/media/gang_scheduling.pdf}
   \caption{Comparación entre una asignación uniforme del tiempo de CPU y una asignación ponderada por la cantidad de hilos. La planificación ponderada reduce el tiempo en que algunos procesadores permanecen ociosos, mejorando la utilización del multiprocesador.}
 \end{figure}
 
@@ -203,11 +207,24 @@ Se define el \textit{conjunto activo de trabajo} (\textit{activity working set})
 
 Las técnicas de \textit{Gang Scheduling} y asignación dedicada buscan minimizar ambos problemas mediante una asignación más eficiente de los procesadores.
 
-\begin{figure}[!ht]
+\begin{table}[!ht]
   \centering
-  % Basada en la Tabla 10.2.
+  \begin{tabular}{c|c|c}
+    \makecell{Número de hilos \\ por aplicación} & 
+    \makecell{Multiplicación \\ de matriz} & 
+    FFT \\ 
+    \hline 
+    1 & 1 & 1 \\ 
+    2 & 1.8 & 1.8 \\
+    4 & 3.8 & 3.8 \\
+    8 & 6.5 & 6.1 \\
+    12 & 5.2 & 5.1 \\
+    16 & 3.9 & 3.8 \\
+    20 & 3.3 & 3 \\
+    24 & 2.8 & 2.4 \\
+  \end{tabular}
   \caption{El rendimiento de aplicaciones paralelas aumenta mientras el número de hilos activos no supere la cantidad de procesadores disponibles. Cuando existen más hilos que procesadores, la sobrecarga por apropiaciones y cambios de contexto degrada significativamente el desempeño.}
-\end{figure}
+\end{table}
 
 \subsubsection{Planificación dinámica}
 
@@ -236,6 +253,12 @@ A medida que aumenta el número de núcleos, adquiere mayor importancia reducir 
 
 En muchas arquitecturas multinúcleo, algunos niveles de caché son privados de cada núcleo mientras que otros son compartidos por grupos de núcleos. En consecuencia, la ubicación de los hilos puede afectar significativamente el rendimiento.
 
+\begin{figure}[!ht]
+    \centering
+    \includegraphics[width=0.8\textwidth]{chapters/03_unit/media/cache_levels.pdf}
+    \caption{Ejemplo de jerarquía de caché en un procesador multinúcleo. Cada núcleo posee una caché L1 privada, algunos grupos de núcleos comparten una caché L2 y todos los núcleos comparten una caché L3. La planificación de hilos debe considerar esta organización para mejorar la localidad y reducir la contención de caché.}
+\end{figure}
+
 Se distinguen dos situaciones principales:
 \begin{itemize}
   \item \textit{Compartición cooperativa de recursos:} varios hilos acceden a los mismos datos. Conviene ejecutarlos en núcleos que compartan caché para aprovechar la localidad de referencia y reducir los accesos a memoria principal.
@@ -243,8 +266,3 @@ Se distinguen dos situaciones principales:
 \end{itemize}
 Por ello, la planificación en sistemas multinúcleo debe equilibrar dos objetivos: mantener los núcleos ocupados y optimizar el uso de la memoria caché. El desarrollo de algoritmos de planificación sensibles a la jerarquía de caché (\textit{cache-aware scheduling}) y a la contención (\textit{contention-aware scheduling}) constituye un área activa de investigación.
 
-\begin{figure}[!ht]
-    \centering
-    % Basada en la Figura 10.3.
-    \caption{Ejemplo de jerarquía de caché en un procesador multinúcleo. Cada núcleo posee una caché L1 privada, algunos grupos de núcleos comparten una caché L2 y todos los núcleos comparten una caché L3. La planificación de hilos debe considerar esta organización para mejorar la localidad y reducir la contención de caché.}
-\end{figure}
