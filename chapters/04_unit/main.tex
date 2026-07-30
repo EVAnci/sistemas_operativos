@@ -17,51 +17,32 @@ A modo de analogía, una operación atómica es semejante a retirar dinero de un
 
 \item \textit{Exclusión mutua}: Requisito según el cual, cuando un proceso se encuentra en una sección crítica que accede a recursos compartidos, ningún otro proceso puede estar en una sección crítica que acceda a cualquiera de esos mismos recursos.
 
-\item \textit{Condición de carrera (Race condition)}: Situación en la que múltiples hilos o procesos leen y escriben un dato compartido, y el resultado final depende del orden relativo en que se ejecuten.
+\item \textit{Condición de carrera}: Situación en la que múltiples hilos o procesos leen y escriben un dato compartido, y el resultado final depende del orden relativo en que se ejecuten.
 
 \item \textit{Inanición (Starvation)}: Situación en la que un proceso ejecutable es ignorado indefinidamente por el planificador; aunque es capaz de proceder, nunca es seleccionado.
 \end{itemize}
 
 La concurrencia da lugar a distintos tipos de interacción entre procesos, desde la competencia por recursos hasta la cooperación mediante compartición de datos o comunicación.
 
-En lo que sigue se analizan los problemas que aparecen cuando existe algún tipo de interacción entre procesos.
-
 \section{Interacción de Procesos}
 
-El conjunto de problemas que introduce la concurrencia depende del grado de conocimiento que un proceso posee sobre la existencia de los demás. Siguiendo la clasificación de Stallings, es posible distinguir tres niveles de percepción, cada uno con un conjunto específico de requisitos de control.
+El conjunto de problemas que introduce la concurrencia depende del grado de conocimiento que un proceso posee sobre la existencia de los demás. Es posible distinguir tres niveles de percepción, cada uno con un conjunto específico de requisitos de control.
 
-\subsubsection{1. Procesos que no se perciben entre sí: competencia}
+\subsubsection{1. Procesos que no se perciben entre sí}
 
-Corresponde a procesos independientes que no han sido diseñados para cooperar. No conocen la existencia de los demás, pero compiten por recursos compartidos del sistema, como el procesador, la memoria o los dispositivos de E/S.
+Corresponde a procesos independientes que no han sido diseñados para cooperar. No conocen la existencia de los demás, por lo tanto compiten por recursos compartidos del sistema.
 
-La interacción es indirecta, a través del sistema operativo, que arbitra la asignación de recursos y debe garantizar su uso correcto.
-\begin{itemize}
-  \item Exclusión mutua: Dos procesos no pueden utilizar simultáneamente un recurso no compartible.
-  \item Deadlock: Dos o más procesos pueden bloquearse mutuamente al esperar recursos retenidos entre sí.
-  \item Starvation: Un proceso puede quedar postergado indefinidamente si nunca obtiene acceso al recurso solicitado.
-\end{itemize}
+La interacción es indirecta, a través del sistema operativo, que arbitra la asignación de recursos y debe garantizar su uso correcto. Los potenciales problemas de control son: exclusión mutua, interbloqueo e inanición.
 
-\subsubsection{2. Procesos que se perciben indirectamente: cooperación por compartición}
+\subsubsection{2. Procesos que se perciben indirectamente}
 
-Los procesos conocen la existencia de los demás y cooperan mediante un objeto compartido, como un búfer, una variable en memoria compartida o un archivo. La interacción se realiza mediante operaciones de lectura y escritura sobre dicho objeto.
+Los procesos conocen la existencia de los demás y cooperan mediante un objeto compartido, como un búfer, una variable en memoria compartida o un archivo. La interacción se realiza mediante operaciones de lectura y escritura sobre dicho objeto. Los potenciales problemas de control son: exclusión mutua, interbloqueo, inanición y coherencia de datos.
 
-Además de los problemas de competencia, debe garantizarse la consistencia de los datos compartidos.
-\begin{itemize}
-  \item Exclusión mutua: El acceso al objeto compartido debe ser mutuamente excluyente.
-  \item Deadlock: La espera por el recurso compartido puede provocar bloqueo mutuo.
-  \item Starvation: Un proceso puede quedar indefinidamente sin acceso al recurso compartido.
-  \item Coherencia de datos: Debe preservarse la consistencia del objeto compartido.
-\end{itemize}
-
-\subsubsection{3. Procesos que se perciben directamente: cooperación por comunicación}
+\subsubsection{3. Procesos que se perciben directamente}
 
 Los procesos conocen la identidad de los demás y cooperan mediante comunicación explícita, como paso de mensajes, señales o tuberías.
 
-Al no compartir memoria de forma implícita, la exclusión mutua deja de ser un requisito del sistema operativo.
-\begin{itemize}
-  \item Deadlock: Los procesos pueden bloquearse mutuamente al esperar mensajes que nunca llegan.
-  \item Starvation: Un proceso puede no recibir nunca el mensaje esperado por falta de equidad en la planificación o en el protocolo de comunicación.
-\end{itemize}
+Al no compartir memoria de forma implícita, la exclusión mutua deja de ser un requisito del sistema operativo. Los potenciales problemas de control son: interbloqueo e inanición.
 
 \input{chapters/04_unit/1_soft_mutual_exclusion.tex}
 

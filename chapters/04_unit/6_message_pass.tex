@@ -6,7 +6,7 @@ Cuando varios procesos cooperan entre sí deben satisfacer dos requisitos fundam
   \item \textit{Comunicación}: intercambiar información entre procesos.
 \end{itemize}
 
-Una forma de satisfacer ambos requisitos es mediante el \textit{paso de mensajes} (\textit{message passing}), donde los procesos se comunican enviando y recibiendo mensajes, sin necesidad de compartir memoria.
+Una forma de satisfacer ambos requisitos es mediante el \textit{paso de mensajes}, donde los procesos se comunican enviando y recibiendo mensajes, sin necesidad de compartir memoria.
 
 Las primitivas fundamentales son:
 \begin{ccode}
@@ -55,7 +55,6 @@ FIFO o por prioridad.\\
 El intercambio de mensajes implica un cierto grado de sincronización entre procesos, ya que un mensaje no puede recibirse antes de haber sido enviado. Por ello, un sistema de paso de mensajes debe definir qué ocurre con un proceso después de ejecutar las primitivas \texttt{send()} y \texttt{receive()}.
 
 Tanto el envío como la recepción pueden ser \textit{bloqueantes} o \textit{no bloqueantes}:
-
 \begin{itemize}
   \item \textit{Envío bloqueante}: el proceso emisor permanece bloqueado hasta que el mensaje es recibido.
   \item \textit{Envío no bloqueante}: el proceso continúa su ejecución inmediatamente después de enviar el mensaje.

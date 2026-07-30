@@ -2,7 +2,7 @@
 
 \subsection{Principios del interbloqueo}
 
-Un \textit{interbloqueo} (\textit{deadlock} o bloqueo mutuo) ocurre cuando un conjunto de procesos queda bloqueado permanentemente porque cada uno espera un evento (generalmente la liberación de un recurso) que únicamente puede ser provocado por otro proceso del mismo conjunto. Como ninguno puede continuar, ninguno libera los recursos que posee.
+Un \textit{interbloqueo} (\textit{deadlock} o bloqueo mutuo) ocurre cuando un conjunto de procesos queda bloqueado permanentemente porque cada uno espera un evento (generalmente la liberación de un recurso) que únicamente puede ser provocado por otro proceso del mismo conjunto. Como ninguno puede continuar, ninguno libera los recursos que posee. El caso del \texttt{Intento III} es un ejemplo.
 
 Todo interbloqueo surge por la competencia entre procesos por recursos compartidos y de acceso exclusivo.
 
@@ -61,7 +61,7 @@ Liberar B   | Liberar A
 \end{minipage}
 \end{center}
 
-La Figura \ref{fig:diagrama_progreso} ilustra el progreso de dos procesos compitiendo por dos recursos de uso exclusivo. 
+La Figura \ref{fig:diagrama_progreso} ilustra el progreso de los procesos \(P\) y \(Q\) compitiendo por los recursos \(A\) y \(B\) de uso exclusivo. 
 
 \begin{figure}[!ht]
   \centering 
@@ -100,7 +100,7 @@ La Figura \ref{fig:diagrama_progreso} ilustra el progreso de dos procesos compit
   \label{fig:diagrama_progreso}
 \end{figure}
 
-Análisis de la figura:
+La figura busca representar el progreso de los procesos. Para lograr interpretar su estructura, se detallan las siguientes características:
 \begin{itemize}
   \item \textit{Representación:} El avance de \(P\) se grafica en el eje \(x\) y el de \(Q\) en el eje \(y\). Las zonas donde ambos requieren el mismo recurso son \textit{regiones prohibidas}.
   \item \textit{Comportamiento:} En un sistema monoprocesador, la trayectoria alterna entre segmentos horizontales (\(P\) ejecuta) y verticales (\(Q\) ejecuta).
@@ -284,9 +284,7 @@ Como antes se dijo, este método es muy conservador, ya que supone que todos los
 
 \subsubsection{Denegación de asignación de recursos}
 
-Un \textit{estado seguro} es aquel donde existe al menos una secuencia de ejecución de todos los procesos que no lleva a interbloqueo. Un \textit{estado inseguro} es el que no es seguro. Inseguro no implica interbloqueo, solo la posibilidad de que ocurra.
-
-Condición para que el proceso \(P_i\) pueda completarse con los recursos disponibles:
+Un \textit{estado seguro} es aquel donde existe al menos una secuencia de ejecución de todos los procesos que no lleva a interbloqueo. Un \textit{estado inseguro} es el que no es seguro. Inseguro no implica interbloqueo, solo la posibilidad de que ocurra. De esta manera, la condición que debe cumplirse para que el proceso \(P_i\) pueda completarse con los recursos disponibles es:
 \begin{equation}
 C_{ij} - A_{ij} \leq V_j, \quad \forall j
 \end{equation}
@@ -300,7 +298,7 @@ C_{ij} - A_{ij} \leq V_j, \quad \forall j
 
 Para visualizar la determinación de un estado seguro, considere el ejemplo de la Figura \ref{fig:safe_state}a, donde hay 4 procesos y 3 tipos de recursos: \(R1=9, R2=3, R3=6\). Quedan libres \(1\) de \(R2\) y \(1\) de \(R3\).
 \begin{enumerate}
-  \item \(P1\), \(P_3\) y \(P_4\) no pueden completarse. \(P2\) sí puede si se le asigna \(1\) unidad de \(R3\).
+  \item \(P1\), \(P3\) y \(P4\) no pueden completarse. \(P2\) sí puede si se le asigna \(1\) unidad de \(R3\).
   \item Se ejecuta \(P2\) y libera sus recursos. Estado \ref{fig:safe_state}b.
   \item Ahora \(P1\) puede completarse. Al terminar libera todo. Estado \ref{fig:safe_state}c.
   \item Luego se completan \(P3\) y \(P4\). Al existir la secuencia \[P2 \rightarrow P1 \rightarrow P3 \rightarrow P4\]el estado \ref{fig:safe_state}a es seguro.
@@ -350,20 +348,20 @@ else {
 /* Algoritmo del banquero (prueba de estado seguro) */
 boolean safe (state S) {
   int currentavail[m];
-  process rest[<number of processes>];
+  process rest[<number of processes>]; // crea lista de procesos activos
   currentavail = available;
-  rest = {all processes};
+  rest = {all processes}; // incluye todos los procesos del sistema
   possible = true;
   while (possible) {
-    <find a process Pk in rest such that
-    claim [k,*] – alloc [k,*]<= currentavail;
+    <encotrar un proceso Pk en la lista rest tal que
+    claim [k,*] – alloc [k,*]<= currentavail>; 
     if (found) {
-    /* simula ejecución de Pk */
+    /* simula ejecución de Pk y libera recursos */
       currentavail = currentavail + alloc [k,*];
       rest = rest - {Pk};
     } else possible = false; 
   }
-  return (rest == null);
+  return (rest == null); // si rest queda vacío se considera estado seguro
 }
 \end{ccode}
 
@@ -375,7 +373,7 @@ Para que el algoritmo funcione, el sistema operativo (el ``banquero'') necesita 
   \item \texttt{claim} (\(C\)): La cantidad máxima de recursos que un proceso declara que utilizará.
   \item \texttt{alloc} (\(A\)): Los recursos que un proceso ya tiene asignados actualmente.
 \end{itemize}
-La estructura \texttt{state} declara justamente esto, el tipo de dato estado.
+La estructura \texttt{state} declara justamente esto, la estructura del estado.
 
 \paragraph{Algoritmo de asignación}
 Cuando un proceso pide recursos, el sistema no se los da inmediatamente. Primero realiza una serie de comprobaciones lógicas:
@@ -401,7 +399,7 @@ Para descubrirlo, hace lo siguiente:
 En términos simples el algoritmo realiza el mismo procedimiento que se realizó en la Figura \ref{fig:safe_state} para determinar un estado seguro. 
 
 \paragraph{Ventajas y desventajas}
-Ventajas: no requiere quitar y revertir procesos como en la detección (se verá a continuación), y es menos restrictivo que la prevención.
+Como ventaja, no requiere quitar y revertir procesos como en la detección (se verá a continuación), y es menos restrictivo que la prevención.
 
 Restricciones para su uso:
 \begin{enumerate}
@@ -421,11 +419,10 @@ Verificar el estado después de cada solicitud permite detectar el problema ráp
 
 El algoritmo utiliza las siguientes estructuras:
 \begin{itemize}
-  \item \textbf{Recursos asignados} (\(A_{ij}\)): recursos actualmente asignados a cada proceso.
-  \item \textbf{Recursos disponibles} (\(V\)): recursos disponibles de cada tipo.
-  \item \textbf{Recursos solicitados} (\(Q\)): recursos adicionales que cada proceso necesita para finalizar.
+  \item Los recursos asignados: \(A_{ij}\)
+  \item Los recursos disponibles: \(V\)
+  \item Los recursos solicitados: \(Q\)
 \end{itemize}
-
 Inicialmente, todos los procesos están desmarcados. El algoritmo realiza lo siguiente:
 \begin{enumerate}
   \item Marcar los procesos cuya fila en \(A_{ij}\) sea completamente cero, ya que no poseen recursos y no pueden formar parte de un interbloqueo.
@@ -441,7 +438,6 @@ Inicialmente, todos los procesos están desmarcados. El algoritmo realiza lo sig
   Luego repetir desde el paso anterior.
   \item Si no existe ningún proceso que pueda continuar, finalizar el algoritmo.
 \end{enumerate}
-
 Al finalizar:
 \begin{itemize}
   \item Si todos los procesos quedaron marcados, no existe interbloqueo.

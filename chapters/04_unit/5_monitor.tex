@@ -1,6 +1,6 @@
 \section{Monitores}
 
-Los \textit{monitores} son una abstracción de alto nivel para sincronización propuesta por Hoare. Proporcionan la misma funcionalidad que los semáforos, pero encapsulan la sincronización dentro de un único módulo, reduciendo la probabilidad de errores.
+Los \textit{monitores} son una abstracción de alto nivel para sincronización. Proporcionan la misma funcionalidad que los semáforos, pero encapsulan la sincronización dentro de un único módulo, reduciendo la probabilidad de errores.
 
 Un monitor está formado por:
 \begin{itemize}
@@ -94,7 +94,7 @@ A continuación se detalla el uso de las variables globales del monitor:
 
 En este ejemplo, solo un proceso a la vez puede estar ejecutando código dentro del monitor (boundedbuffer). No se necesita un semáforo mutex. Si el Productor está dentro de \texttt{append}, el Consumidor no puede entrar a \texttt{take} hasta que el Productor salga (o se bloquee).
 
-Si un productor se bloquea cuando el búfer está lleno y un consumidor cuando está vacío. Cuando el estado del búfer cambia, el proceso correspondiente es despertado mediante \texttt{csignal()}.
+Si un productor se bloquea cuando el búfer está lleno o un consumidor cuando está vacío, cuando el estado del búfer cambia, el proceso correspondiente es despertado mediante \texttt{csignal()}.
 
 \paragraph{Ventajas respecto a los semáforos}
 

@@ -73,7 +73,7 @@ void semWaitB(binary_semaphore s) {
 }
 
 void semSignalB(binary_semaphore s) {
-  if (s.queue is empty())
+  if (s.queue is empty)
     s.value = one;
   else {
     /* despertar un proceso de s.queue */
@@ -82,9 +82,10 @@ void semSignalB(binary_semaphore s) {
 }
 \end{ccode}
 
-Visto esto, el semáforo binario es un caso particular del semáforo contador, de esta manera, si el semáforo contador puede hacer todo lo que hace el binario, ¿por qué existe el semáforo binario? Existen razones fundamentales de arquitectura, eficiencia y teoría.
+En términos simples \texttt{semWaitB} comprueba si el recurso está siendo utilizado, y si es así, bloquea el proceso. Por otro lado \texttt{semSignalB} comprueba si hay procesos en la cola, y si no hay, simplemente coloca el valor de \texttt{s.value} en uno.
 
-A nivel del procesador (hardware), ejecutar operaciones aritméticas con enteros y comprobar condiciones complejas en memoria de forma atómica (sin interrupciones) es costoso.
+Visto esto, el semáforo binario es un caso particular del semáforo contador, de esta manera, si el semáforo contador puede hacer todo lo que hace el binario, ¿por qué existe el semáforo binario? 
+A nivel del procesador (y a nivel de hardware), ejecutar operaciones aritméticas con enteros y comprobar condiciones complejas en memoria de forma atómica (sin interrupciones) puede ser costoso.
 
 Sin embargo, casi todos los procesadores modernos incluyen instrucciones atómicas muy simples orientadas a bits individuales, como Test--And--Set o Compare--And--Swap. Un semáforo binario se adapta perfectamente a estas instrucciones de hardware porque solo requiere cambiar un estado de 0 a 1 o de 1 a 0, haciendo que su implementación en el núcleo del sistema operativo sea extremadamente rápida y con un consumo de memoria mínimo.
 
@@ -92,13 +93,12 @@ Adicionalmente, Edsger Dijkstra (creador de los semáforos), demostró formalmen
 
 Dado que ambos tienen la misma potencia de expresión ---lo que se resuelve con uno, también se puede resolver con el otro---, el semáforo binario se considera la primitiva básica o atómica sobre la cual se pueden construir abstracciones más complejas.
 
-En los sistemas operativos modernos, el concepto de semáforo binario evolucionó hacia el \textit{Mutex} (Mutual Exclusion lock). Aunque parecen lo mismo, el Mutex añade una regla crucial que el semáforo contador no tiene: propiedad (ownership).
+En los sistemas operativos modernos, el concepto de semáforo binario evolucionó hacia el \textit{Mutex} (Mutual Exclusion lock). Aunque parecen lo mismo, el Mutex añade una regla crucial que el semáforo binario no tiene: propiedad (ownership).
 \begin{itemize}
-  \item En un semáforo binario, el proceso A puede hacer \texttt{semWait} y el proceso B puede hacer \texttt{semSignal}.
+  \item En un semáforo binario, el proceso A puede hacer \texttt{semWaitB} y el proceso B puede hacer \texttt{semSignalB}.
   \item En un Mutex, únicamente el proceso que bloqueó el recurso está autorizado a liberarlo.
 \end{itemize}
-Esta restricción del mundo binario permite solucionar problemas graves de sistemas operativos como la inversión de prioridades (mediante protocolos donde el sistema sube la prioridad temporalmente al proceso que tiene el Mutex).
-
+Esta restricción que añade el Mutex permite solucionar problemas graves de sistemas operativos.
 
 \paragraph{Semáforos fuertes y débiles}
 

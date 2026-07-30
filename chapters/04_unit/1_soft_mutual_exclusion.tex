@@ -1,10 +1,12 @@
 \section{Exclusión Mutua}
 
-Aunque anteriormente se presentó el concepto de exclusión mutua en el glosario, se presenta una definición más completa. La exclusión mutua es una propiedad y un mecanismo de control de concurrencia diseñado para prevenir que dos o más procesos (o hilos de ejecución) accedan de forma simultánea a un mismo recurso compartido ---como variables globales, archivos, estructuras de datos o dispositivos de hardware--- durante períodos en los que la ejecución simultánea podría provocar inconsistencias, pérdida de datos o condiciones de carrera (\emph{race conditions}). El fragmento de código o intervalo de tiempo en el que un proceso accede a dicho recurso se denomina sección crítica y se abreviará como SC.
+Aunque anteriormente se presentó el concepto de exclusión mutua en el glosario, se presenta una definición más completa.
+
+La exclusión mutua es una propiedad y un mecanismo de control de concurrencia diseñado para prevenir que dos o más procesos (o hilos de ejecución) accedan de forma simultánea a un mismo recurso compartido ---como variables globales, archivos, estructuras de datos o dispositivos de hardware--- durante períodos en los que la ejecución simultánea podría provocar inconsistencias, pérdida de datos o condiciones de carrera. El fragmento de código o intervalo de tiempo en el que un proceso accede a dicho recurso se denomina sección crítica y se abreviará como SC.
 
 \subsection{Requisitos de la exclusión mutua}
 
-Para que un algoritmo o mecanismo de sincronización sea considerado una solución válida, robusta y aceptable al problema de la exclusión mutua, debe cumplir obligatoriamente con los siguientes seis requisitos.
+Para que un algoritmo o mecanismo de sincronización sea considerado una solución válida y aceptable al problema de la exclusión mutua, debe cumplir obligatoriamente con los siguientes seis requisitos.
 
 \subparagraph{1. Garantía de Exclusión Mutua}
 En un instante dado, solo un proceso de entre todos los que compiten por acceder al mismo recurso u objeto compartido debe tener permiso para entrar y ejecutarse dentro de su SC. 
@@ -26,13 +28,7 @@ Cualquier proceso que ingrese a su SC debe permanecer dentro de ella únicamente
 
 \subsection{Implementaciones por software}
 
-En este apartado se realizará la implementación de cuatro intentos de exclusión mutua por software. De manera resumida, cada intento resolverá un problema pero tendrá otros problemas. Ver esto permite analizar como cumplir los 6 requisitos anteriormente descritos. Titularemos cada intento de la siguiente manera:
-\begin{itemize}
-  \item Intento 1 - Uso de variable \texttt{turn}
-  \item Intento 2 - Banderas con verificación previa (\texttt{flag})
-  \item Intento 3 - Banderas con reserva previa
-  \item Intento 4 - Retroceso por cortesía
-\end{itemize}
+En este apartado se realizará la implementación de cuatro intentos de exclusión mutua por software. De manera resumida, cada intento resolverá un problema pero tendrá otros problemas. Ver esto permite analizar como cumplir los 6 requisitos anteriormente descritos.
 
 El código presentado está realizado usando el lenguaje de programación C y las librerías de hilos del sistema operativo Linux. Para probar las soluciones puede copiar y pegar el código, compilarlo y ejecutarlo usando los siguientes comandos en una terminal.
 \begin{bashcode}[title=Compilar y ejecutar ejemplos]
@@ -356,7 +352,7 @@ En cada caso, ocurriría lo siguiente:
 
     \item Si $P_1$ está dentro de la sección crítica y $P_0$ quiere entrar: \texttt{flag[1] == true} y \texttt{turn == 1} es \texttt{true}, por lo que $P_0$ permanece en espera activa hasta que $P_1$ ejecute \texttt{flag[1] = false} al salir.
 
-    \item Y el caso importamte, ambos quieren entrar simultáneamente: Inicialmente \texttt{flag[0] = flag[1] = false}.
+    \item Y el caso importamte, ambos quieren entrar simultáneamente: Inicialmente \texttt{flag[0] = flag[1] = false}, por lo que ambos ejecutarán:
       \begin{bashcode}
 P0: flag[0]=true; turn=1;
 P1: flag[1]=true; turn=0;

@@ -18,7 +18,7 @@ Sin embargo esta solución presenta dos desventajas importantes:
 
 \subsubsection{Instrucciones especiales}
 
-En sistemas multiprocesador no existe una relación maestro--esclavo entre procesadores, por lo que la exclusión mutua no puede implementarse mediante interrupciones. En su lugar, el hardware proporciona instrucciones atómicas, capaces de realizar varias operaciones sobre una misma posición de memoria como una única operación indivisible. Durante su ejecución, ningún otro procesador puede acceder a dicha posición de memoria.
+En sistemas multiprocesador no existe una relación maestro--esclavo\footnote{Maestro--Esclavo: Es una arquitectura en la que un procesador maestro coordina y uno o más esclavos ejecutan tareas o siguen instrucciones.} entre procesadores, por lo que la exclusión mutua no puede implementarse mediante interrupciones. En su lugar, el hardware proporciona instrucciones atómicas, capaces de realizar varias operaciones sobre una misma posición de memoria como una única operación indivisible. Durante su ejecución, ningún otro procesador puede acceder a dicha posición de memoria.
 
 Estas instrucciones requieren soporte del hardware; si la arquitectura no las implementa, no es posible utilizarlas para sincronización.
 
@@ -41,7 +41,7 @@ El siguiente algoritmo implementa exclusión mutua mediante una variable compart
 
 \begin{ccode}[title=Exclusión mutua usando TS]
 const int n = /* numero de procesos */
-int cerrojo;
+int cerrojo; /* variable compartida */
 
 void P(int i) {
   while (true) {
@@ -124,10 +124,10 @@ int cerrojo;
 
 void P(int i) {
   while (true) {
-    int llavei = 1;
+    int llave = 1;
     do {
-      exchange(&llavei, &cerrojo);
-    } while (llavei != 0);
+      exchange(&llave, &cerrojo);
+    } while (llave == 1);
     /* sección crítica */
     cerrojo = 0;
     /* resto */
@@ -140,8 +140,7 @@ void main() {
 }
 \end{ccode}
 
-Durante toda la ejecución se cumple el siguiente invariante:
-
+Durante toda la ejecución se cumple la siguiente invariante:
 \[
 \text{cerrojo} + \sum_i \text{llave}_i = n
 \]
@@ -161,7 +160,7 @@ Las instrucciones especiales presentan las siguientes ventajas:
 Sin embargo, también presentan importantes desventajas:
 
 \begin{itemize}
-    \item Utilizan \textit{busy waiting} (\textit{spin waiting}), por lo que un proceso consume tiempo de CPU mientras espera acceder a la sección crítica.
-    \item Puede producirse \textbf{inanición} (\textit{starvation}), ya que no existe garantía de que todos los procesos obtengan eventualmente acceso.
-    \item Puede producirse \textbf{interbloqueo} (\textit{deadlock}) por inversión de prioridades. Por ejemplo, si un proceso de baja prioridad entra en la sección crítica y es interrumpido por otro de mayor prioridad que intenta acceder al mismo recurso, este último quedará esperando indefinidamente mientras impide que el primero continúe su ejecución.
+    \item Utilizan \textit{busy waiting}, por lo que un proceso consume tiempo de CPU mientras espera acceder a la sección crítica.
+    \item Puede producirse \textit{inanición}, ya que no existe garantía de que todos los procesos obtengan eventualmente acceso.
+    \item Puede producirse \textit{interbloqueo} por inversión de prioridades. Por ejemplo, si un proceso de baja prioridad entra en la sección crítica y es interrumpido por otro de mayor prioridad que intenta acceder al mismo recurso, este último quedará esperando indefinidamente mientras impide que el primero continúe su ejecución.
 \end{itemize}
