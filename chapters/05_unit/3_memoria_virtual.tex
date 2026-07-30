@@ -1,14 +1,19 @@
 \section{Memoria Virtual}
 
-\subparagraph{Memoria virtual} Un esquema de asignación de almacenamiento en el cual la memoria secundaria se puede direccionar como si fuera parte de la memoria principal. Las direcciones que un programa puede utilizar para hacer referencia a la memoria se distinguen de las direcciones que el sistema de memoria usa para identificar ubicaciones físicas de almacenamiento, y las direcciones generadas por el programa se traducen automáticamente a las direcciones de máquina correspondientes. El tamaño del almacenamiento virtual está limitado por el esquema de direccionamiento del sistema informático y por la cantidad de memoria secundaria disponible, no por el número real de ubicaciones en el almacenamiento principal.
+La \textit{memoria virtual} es una técnica de administración de memoria que permite utilizar el almacenamiento secundario como una extensión de la memoria principal. De esta forma, un proceso puede disponer de un espacio de direcciones mayor que la memoria RAM físicamente instalada.
 
-\subparagraph{Dirección virtual} La dirección asignada a una ubicación en la memoria virtual para permitir que se acceda a dicha ubicación como si formara parte de la memoria principal.
+Para lograrlo, se distingue entre las direcciones generadas por el programa (\emph{direcciones virtuales}) y las direcciones reales de la memoria (\emph{direcciones físicas}). Cada vez que un proceso accede a memoria, el hardware y el sistema operativo traducen automáticamente la dirección virtual a la dirección física correspondiente.
 
-\subparagraph{Espacio de direcciones virtuales} El almacenamiento virtual asignado a un proceso.
+Gracias a este mecanismo, el tamaño del espacio de direcciones de un proceso queda determinado por la arquitectura del sistema y la capacidad del almacenamiento secundario, en lugar de estar limitado únicamente por la cantidad de memoria principal disponible.
 
-\subparagraph{Espacio de direcciones} El rango de direcciones de memoria disponibles para un proceso.
+La memoria virtual introduce una abstracción entre la memoria utilizada por los procesos y la memoria física del sistema. Como consecuencia, es necesario distinguir una serie de conceptos relacionados con el direccionamiento de memoria que se utilizarán a lo largo del capítulo:
 
-\subparagraph{Dirección real / Dirección física} La dirección de una ubicación de almacenamiento en la memoria principal.
+\begin{itemize}
+  \item \textit{Espacio de direcciones:} conjunto de direcciones de memoria que un proceso puede utilizar durante su ejecución.
+  \item \textit{Espacio de direcciones virtuales:} espacio de direcciones asignado a un proceso mediante el mecanismo de memoria virtual. Generalmente es mayor que la memoria principal disponible.
+  \item \textit{Dirección virtual:} dirección perteneciente al espacio de direcciones virtuales, generada por el proceso y traducida automáticamente a una dirección física antes de acceder a la memoria.
+  \item \textit{Dirección física (o real):} dirección correspondiente a una ubicación de la memoria principal (RAM), utilizada finalmente por el hardware para realizar el acceso.
+\end{itemize}
 
 \subsection{Hardware y estructuras de control}
 
@@ -18,15 +23,15 @@ Comparada con el particionado fijo y dinámico, la paginación y segmentación s
   \item Carga no contigua: un proceso se divide en piezas (páginas o segmentos) que no necesitan estar contiguas en memoria gracias a la tabla de páginas/segmentos.
 \end{enumerate}
 
-Lo interesante de esto es que no hace falta cargar todo el proceso. Si la pieza con la próxima instrucción y la que tiene el dato a acceder están en memoria principal, la ejecución puede continuar.
+Lo interesante de esto es que no hace falta cargar todo el proceso. Si la pieza con la próxima instrucción y la que tiene el dato a acceder están en memoria principal, la ejecución puede continuar. Esto es exactamente lo que se busca con la memoria virtual.
 
-Funciona de la siguiente manera: al traer un proceso nuevo, el SO carga solo una o pocas piezas iniciales. El conjunto de piezas que realmente está en memoria en un momento dado se llama \emph{conjunto residente}.
+Cuando un proceso se carga en memoria, el sistema operativo transfiere únicamente una o unas pocas piezas iniciales. El conjunto de piezas que permanece en memoria principal en un instante dado se denomina \emph{conjunto residente}.
 
 Mientras todas las referencias caigan dentro del conjunto residente, todo va bien. Si el procesador encuentra una dirección lógica que no está en memoria, genera una interrupción por fallo de acceso a memoria (memory fault). El SO bloquea el proceso, emite una lectura de disco para traer la pieza faltante y despacha otro proceso mientras espera. Cuando llega por E/S, el proceso vuelve a estado Listo.
 
-¿No es ineficiente? Puede parecerlo, pero es eficiente si se gestiona bien.
+¿Tener operaciones E/S adicionales no es ineficiente al momento de ejecutar un proceso? Puede parecerlo, pero es eficiente si se gestiona bien.
 
-Esto tiene dos implicaciones fundamentales:
+El uso de memoria virtual tiene dos implicaciones fundamentales:
 \begin{enumerate}
   \item Más procesos en memoria: al cargar solo parte de cada uno, caben más. Aumenta la probabilidad de que siempre haya un proceso en estado Listo y mejora el uso del procesador.
   \item Procesos más grandes que la memoria física: se levanta la restricción más básica de la programación. El programador ya no necesita hacer overlays manuales. Ve una memoria enorme (del tamaño del disco) y es el SO quien trae las piezas bajo demanda.
@@ -129,7 +134,9 @@ El compromiso según tamaño de página puede categorizarse de la siguiente mane
   \item Página grande: menos páginas por proceso, por lo tanto tablas de páginas más pequeñas. Si las páginas son muy pequeñas, las tablas se hacen tan grandes que parte de ellas debe quedar en memoria virtual, pudiendo causar doble fallo de página: uno para traer la porción de la tabla y otro para traer la página del proceso. Además, los dispositivos de almacenamiento rotacionales transfieren bloques grandes de forma más eficiente, lo que favorece páginas grandes.
 \end{itemize}
 
-Por el principio de localidad, si la página es muy pequeña, habrá muchas páginas en memoria con código/datos cercanos a las referencias recientes, y la tasa de fallos será baja. Al aumentar el tamaño, cada página incluye lugares más lejanos a la referencia reciente, se debilita la localidad y la tasa de fallos sube. Finalmente, cuando una sola página abarca todo el proceso, la tasa vuelve a cero porque ya no hay fallos. Esta tasa también depende de la política de software: a mayor número de marcos asignados a un proceso, menor tasa de fallos.
+Por el principio de localidad, al aumentar moderadamente el tamaño de página, cada fallo incorpora más datos cercanos a la referencia realizada, reduciendo la tasa de fallos. Sin embargo, si las páginas son demasiado grandes, con una cantidad fija de memoria principal cabrán menos páginas en el conjunto residente, aumentando los reemplazos y, en consecuencia, la tasa de fallos. Por ello, existe un tamaño de página que representa un compromiso entre ambos efectos.
+
+Además, la tasa de fallos también depende de la política de asignación de memoria: cuanto mayor sea el número de marcos asignados a un proceso, menor será, en general, la probabilidad de producir un fallo de página.
 
 Aunque la memoria principal crece, el tamaño de los programas también y la localidad disminuye por técnicas modernas:
 \begin{itemize}

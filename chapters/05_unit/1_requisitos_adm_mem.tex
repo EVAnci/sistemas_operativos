@@ -61,18 +61,9 @@ Por ejemplo:
 
 El acceso compartido debe realizarse de forma controlada, sin comprometer la protección entre procesos.
 
-\subsection{Organización lógica}
+\subsubsection{Organización lógica}
 
-Aunque la memoria física es un espacio lineal de direcciones, los programas suelen organizarse en \textit{módulos} independientes (código, bibliotecas, datos, etc.).
-
-Trabajar con módulos ofrece varias ventajas:
-\begin{itemize}
-  \item compilación independiente de cada módulo;
-  \item distintos permisos de acceso (solo lectura, ejecución, lectura/escritura);
-  \item posibilidad de compartir módulos entre procesos.
-\end{itemize}
-
-La técnica de administración de memoria que mejor soporta esta organización es la \textit{segmentación}.
+La memoria debe organizarse de forma que refleje la estructura lógica de los programas. En general, las aplicaciones se desarrollan como un conjunto de módulos (funciones, bibliotecas, procedimientos o clases), cada uno con un propósito específico. Esta organización permite asignar distintos niveles de protección a cada módulo, por ejemplo, estableciendo regiones de solo lectura para evitar modificaciones accidentales o permisos de solo ejecución para el código. Además, la división modular facilita la compartición de módulos entre varios procesos, reduciendo el uso de memoria y favoreciendo la reutilización de código, como ocurre con las bibliotecas compartidas.
 
 \subsection{Organización física}
 

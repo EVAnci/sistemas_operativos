@@ -130,7 +130,7 @@ En la práctica, \textit{First-Fit} suele ofrecer el mejor equilibrio entre velo
 
 \paragraph{Algoritmo de reemplazo}
 
-Si todos los procesos residentes están bloqueados y no existe memoria suficiente para cargar otro proceso (incluso después de compactar), el sistema operativo debe seleccionar un proceso para intercambiar (\textit{swap out}) y liberar espacio.
+Si todos los procesos residentes están bloqueados y no existe memoria suficiente para cargar otro proceso (incluso después de compactar), el sistema operativo debe seleccionar un proceso para intercambiar y liberar espacio.
 
 La elección del proceso a reemplazar depende del algoritmo de reemplazo utilizado, tema que se estudia posteriormente junto con los esquemas de memoria virtual.
 
@@ -197,14 +197,14 @@ En los esquemas donde un proceso siempre ocupa la misma partición (por ejemplo,
 
 El problema aparece cuando un proceso puede ocupar particiones distintas durante su vida (particiones de igual tamaño, una única cola para particiones desiguales o particionamiento dinámico), ya que las direcciones absolutas dejan de ser válidas. En estos casos las posiciones de instrucciones y datos no son fijas, ya que cambian en cada \textit{swap-in} o desplazamiento durante la compactación.
 
-Para resolverlo se distinguen dos tipos de direcciones:
+Para resolverlo se distinguen tres tipos de direcciones:
 \begin{itemize}
   \item \textit{Dirección lógica:} referencia independiente de la ubicación física del proceso.
   \item \textit{Dirección relativa:} caso particular de dirección lógica, expresada como un desplazamiento respecto de un punto conocido (generalmente el inicio del programa).
   \item \textit{Dirección física/absoluta:} ubicación real en memoria principal.
 \end{itemize}
 
-Los programas se cargan utilizando reubicación dinámica en tiempo de ejecución (\textit{dynamic run-time loading}) con soporte de hardware, manteniendo las referencias como direcciones relativas. Durante la ejecución, el hardware traduce automáticamente cada dirección relativa a una dirección física.
+Los programas se cargan utilizando reubicación dinámica en tiempo de ejecución con soporte de hardware, manteniendo las referencias como direcciones relativas. Durante la ejecución, el hardware traduce automáticamente cada dirección relativa a una dirección física.
 
 Cuando un proceso pasa a estado \textit{Running}, se cargan dos registros especiales (Figura~\ref{fig:soporte_hw_realocation}):
 \begin{itemize}

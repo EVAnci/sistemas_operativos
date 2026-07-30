@@ -18,7 +18,7 @@ Esto elimina la fragmentación externa: aunque no haya espacio contiguo suficien
 
 Para lograrlo, el SO mantiene una tabla de páginas por cada proceso, que indica en qué marco está cada página. La dirección lógica que genera el programa se compone de dos partes: \texttt{número de página + desplazamiento (offset)}. El hardware del procesador usa la tabla de páginas para traducirla a una dirección física: \texttt{número de marco + desplazamiento}.
 
-Por ejemplo, considere los procesos A y B paginados y cargados en memoria como se muestra en la figura \ref{sfig:paginacion_a_y_b}. Si ahora se intenta insertar el proceso C tiene 5 páginas, pueden cargarse en los marcos 4, 5, 6, 11 y 12 como se muestra en la figura \ref{sfig:introduccion_c_paginacion}. Su tabla de páginas registrará esa correspondencia.
+Por ejemplo, considere los procesos A y B paginados y cargados en memoria como se muestra en la figura \ref{sfig:paginacion_a_y_b}. Si ahora se intenta insertar el proceso C, que tiene 5 páginas, este pueden cargarse en los marcos 4, 5, 6, 11 y 12 como se muestra en la figura \ref{sfig:introduccion_c_paginacion}. Su tabla de páginas registrará esa correspondencia.
 
 \begin{figure}[!ht]
   \centering
@@ -82,18 +82,23 @@ El tamaño de marcos y páginas se define como una potencia de 2 (ej 1KB = 1024 
 
 Ejemplo con 16 bits y páginas de 1KB (10 bits de offset, 6 de página): la dirección lógica 1502 = \texttt{000001 0111011110} es página 1, offset 478. Si la página 1 está en el marco 6 (\texttt{000110}), la dirección física será \texttt{000110 0111011110}.
 
-En términos simples, la memoria se divide en muchos marcos pequeños. Cada proceso se divide en páginas y se cargan en marcos disponibles, no contiguos, mediante una tabla de páginas. Esto elimina la fragmentación externa y hace eficiente el uso de la memoria.
+En términos simples, la operación sería:
+\begin{gather*}
+  \text{\texttt{000001 0111011110}} \\ \Downarrow \qquad\qquad\qquad \\ \text{\texttt{000110 0111011110}}
+\end{gather*}
+Es decir, se reemplaza el número de página por la dirección del marco.
 
 \section{Segmentación}
 
-Un programa puede subdividirse en segmentos de tamaño variable (código, datos, pila, etc.), aunque existe un tamaño máximo por segmento. Como en la paginación, la dirección lógica tiene dos partes: \texttt{número de segmento + desplazamiento (offset)}.
+En la segmentación un programa puede subdividirse en segmentos de tamaño variable (código, datos, pila, etc.), aunque existe un tamaño máximo por segmento. 
 
-Diferencia con particionado dinámico: al usar segmentos de tamaño desigual, es similar al particionado dinámico. Sin memoria virtual, todos los segmentos del programa deben estar en memoria para ejecutarse. La diferencia es que el programa puede ocupar varias particiones no contiguas. Esto elimina la fragmentación interna, pero sufre fragmentación externa, aunque menor, porque los bloques son más pequeños.
+Como en la paginación, la dirección lógica tiene dos partes: \texttt{número de segmento + desplazamiento}.
+
+Al usar segmentos de tamaño desigual, es similar al particionado dinámico. Sin memoria virtual, todos los segmentos del programa deben estar en memoria para ejecutarse. La diferencia es que el programa puede ocupar varias particiones no contiguas. Esto elimina la fragmentación interna, pero sufre fragmentación externa, aunque menor, porque los bloques son más pequeños.
 
 A diferencia de la paginación, que es invisible para el programador, la segmentación es visible y sirve para organizar mejor el programa. El compilador o programador asigna el código y los datos a distintos segmentos para facilitar la programación modular. Su inconveniente es que debe respetar el tamaño máximo de segmento.
 
-Traducción de direcciones:
-No hay una relación directa entre dirección lógica y física. Se usa una tabla de segmentos por proceso, que por cada segmento guarda su dirección de inicio en memoria física y su longitud. Cuando un proceso pasa a ejecución, la dirección de su tabla se carga en un registro especial.
+Sin embargo, no hay una relación directa entre dirección lógica y física. Por este motivo, se usa una tabla de segmentos por proceso, que por cada segmento guarda su dirección de inicio en memoria física y su longitud como se muestra en la figura \ref{fig:comp_pag_seg}. Cuando un proceso pasa a ejecución, la dirección de su tabla se carga en un registro especial.
 
 \begin{figure}[!ht]
   \centering
@@ -127,3 +132,5 @@ A modo de síntesis, como se muestra en la comparación de la figura \ref{fig:co
 \input{chapters/05_unit/3_memoria_virtual.tex}
 
 \input{chapters/05_unit/4_os_mem_mgr.tex}
+
+\input{chapters/05_unit/5_preguntas.tex}

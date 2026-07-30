@@ -1,0 +1,192 @@
+\section{Revisión de contenidos}
+
+A continuación, se presentan una serie de preguntas diseñadas para evaluar la compresión de los conceptos fundamentales presentados en el texto.
+
+\subsection{Preguntas sobre gestión de memoria}
+
+\begin{enumerate}
+  \item Enumere los 5 requisitos que debe satisfacer un sistema de gestión de memoria.
+  \item ¿En qué consiste la reubicación?
+  \item ¿Por qué la protección debe implementarse por hardware?
+  \item Mencione los dos tipos de particionamiento fijo.
+  \item ¿En qué consiste la compactación en el particionamiento dinámico?
+  \item ¿Qué algoritmos de ubicación existen en el particionamiento dinámico?
+  \item En términos simples ¿En qué consiste el sistema Buddy?
+  \item Describa dirección lógica y dirección física.
+  \item ¿Qué hacen los registros \texttt{base} y \texttt{límite} en la segmentación?
+  \item Respecto de la paginación ¿Qué es un marco y qué es una página?
+  \item En paginación ¿Cómo se obtiene la dirección física a partir de la lógica?
+  \item ¿En qué consiste la segmentación?
+  \item En segmentación ¿Cómo se construye la dirección física a partir de la lógica?
+\end{enumerate}
+
+\subsubsection*{Respuestas}
+
+\paragraph{Respuesta 1}
+\begin{enumerate}
+  \item Reubicación
+  \item Protección 
+  \item Compartición
+  \item Organización lógica
+  \item Organización física
+\end{enumerate}
+
+\paragraph{Respuesta 2}
+La reubicación consiste en poder ejecutar un programa independientemente de la ubicación física en la memoria. Incluso podría ser reubicado o cambiado de lugar y continuar funcionando.
+
+\paragraph{Respuesta 3}
+Debe implementarse por hardware debido a que las referencias a memoria que realiza un programa son dinámicas, por lo que el procesador debe encargarse de traducir esas direcciones a direcciones de memoria físicas y comprobar que sean válidas en tiempo de ejecución.
+
+\paragraph{Respuesta 4}
+Particionamiento fijo con particiones iguales, y particionamiento fijo con particiones de distinto tamaño. Usualmente las particiones son de tamaño de potencias de dos.
+
+\paragraph{Respuesta 5}
+La compactación consiste en reducir o eliminar la fragmentación externa. Generalmente es muy costosa computacionalmente ya que hay que desplazar todos los bloques de modo que queden contiguos. 
+
+Sin embargo, esta reducción o eliminación de la fragmentación externa no significa que pueda volver a producirse en el futuro.
+
+\paragraph{Respuesta 6}
+\begin{itemize}
+  \item \emph{First-Fit}: Coloca el proceso en el primer hueco capaz de contenerlo.
+  \item \emph{Best-Fit}: Coloca el proceso en el hueco de menor tamaño posible que pueda contenerlo.
+  \item \emph{Next-Fit}: Coloca el proceso en el primer hueco a partir del último utilizado.
+\end{itemize}
+
+\paragraph{Respuesta 7}
+Básicamente consiste en dividir la memoria en mitades. En primera instancia se tiene un bloque de memoria de tamaño \(2^U\). Cuando un proceso solicita una cantidad de memoria \(s\) se verifica que cumpla:
+\[
+  2^{U-1}<s\leqslant 2^U
+\]
+Si lo cumple se le asigna la memoria, sino el bloque \(2^U\) se divide en dos bloques iguales \(2^{U-1}\) y se repite el algoritmo.
+
+Cuando un bloque de memoria es liberado, si su compañero también está libre pueden volver a juntarse para formar un bloque contiguo más grande.
+
+\paragraph{Respuesta 8}
+La dirección lógica es la dirección de memoria percibida por el proceso. Esta dirección es independiente a la memoria física, y generalmente se compone de:
+\begin{itemize}
+  \item para paginación: el número de página + offset
+  \item para segmentación: el número de segmento + offset
+\end{itemize}
+
+La dirección física es la dirección real en memoria principal.
+
+\paragraph{Respuesta 9}
+El registro base almacena la dirección física inicial del segmento. Sirve para encontrar el segmento en las tablas de segmentos.
+
+El registro límite almacena la dirección final de datos (o la longitud máxima del segmento). Sirve para verificar que el acceso a memoria corresponda al espacio del propio segmento.
+
+\paragraph{Respuesta 10}
+Un marco es un espacio de memoria física particionada, generalmente de tamaño de potencia de dos. Una página es una parte de un proceso particionado.
+
+El marco y la página son generalmente del mismo tamaño. Con paginación se genera fragmentación interna, y esto ocurre porque
+\begin{itemize}
+  \item La última parte del proceso no ocupa toda la página.
+  \item Un proceso es más pequeño que el tamaño de página.
+\end{itemize}
+
+\paragraph{Respuesta 11}
+Cuando se recibe la dirección lógica esta generalmente se compone de dos bloques: \texttt{número de página} y \texttt{offset}. El número de página sirve para buscar la \texttt{dirección de marco} en la tabla de páginas del proceso. Luego se construye la dirección física reemplazando el número de página por la dirección de marco, resultando
+\begin{center}
+  \texttt{marco}\(+\)\texttt{offset}
+\end{center}
+
+\paragraph{Respuesta 12}
+Consiste en dividir un proceso en módulos independientes. Generalmente se divide en programa, datos y pila, pero puede dividirse tanto como el programador desee. Esto facilita mucho la modularidad.
+
+Cuando un proceso se carga en memoria, se cargan sus diferentes segmentos por separado. Esto permite que no requiera un espacio contiguo de memoria para almacenar todo el proceso, aunque cada segmento debe ser almacenado de forma contigua.
+
+La restricción es que existe un tamaño máximo de segmento.
+
+\paragraph{Respuesta 13}
+Cuando se recibe una dirección lógica, esta contiene 2 campos: el número de segmento y el offset. Entonces, para encontrar la dirección física:
+\begin{enumerate}
+  \item Con el número de segmento se busca en la tabla de segmentos del proceso el puntero del inicio del segmento y la longitud del segmento.
+  \item Se suma la dirección física del inicio del segmento con el offset.
+  \item Se verifica que el resultado sea menor que la longitud del segmento.
+  \item Si se cumple lo anterior se realiza 
+    \[
+      \text{\texttt{dirección física}}=\text{\texttt{dirección del segmento}} + \text{\texttt{offset}}
+    \]
+\end{enumerate}
+
+\subsection{Preguntas sobre memoria virtual}
+
+\begin{enumerate}
+  \item ¿En qué consiste la memoria virtual?
+  \item ¿Qué es el conjunto residente?
+  \item ¿Qué es la Hiperpaginación o Thrashing?
+  \item En memoria virtual ¿Qué se agrega a la paginación para localizar el marco físico?
+  \item ¿En qué consiste el directorio de páginas?
+  \item ¿Para qué sirve el TLB?
+  \item Explique brevemente el funcionamiento de memoria virtual con segmentación paginada.
+  \item Explique brevemente las dos estrategias más utilizadas de la política de carga.
+  \item ¿Por qué la política de ubicación es irrelavante cuando se utiliza paginación?
+  \item ¿En que consiste la política de reemplazo?
+  \item Describa brevemente los algoritmos de reemplazo.
+\end{enumerate}
+
+\subsection*{Respuestas}
+
+\paragraph{Respuesta 1}
+La memoria virtual es una técnica que permite almacenar una parte del proceso en ejecución en memoria principal y el resto en memoria secundaria.
+
+Esto permite almacenar más procesos en memoria principal ya que no se almacena el proceso completo sino solo una parte.
+
+La cantidad de bloques del proceso almacenado en memoria principal y en memoria secundaria depende de las políticas utilizadas.
+
+En general la memoria virtual utiliza las técnicas de paginación y/o segmentación para permitir que procesos no necesariamente requieran espacios contiguos de memoria. Pero además permite que parte de las páginas o segmentos estén en memoria secundaria.
+
+Por esto último la memoria virtual requiere de soporte de hardware como una unidad MMU en el CPU para poder traducir las direcciones virtuales a direcciones físicas.
+
+\paragraph{Respuesta 2}
+El conjunto residente es el conjunto de bloques de un proceso que actualmente están en memoria principal.
+
+\paragraph{Respuesta 3}
+Es cuando el sistema operativo pasa más tiempo intercambiando páginas entre memoria principal y secundaria que ejecutando procesos. Generalmente es algo no deseado.
+
+\paragraph{Respuesta 4}
+Principalmente se agregan dos campos. De esta forma la estructura resultante es:
+\begin{itemize}
+  \item Número de marco físico (previamente existente)
+  \item Bit de presencia (nuevo)
+  \item Bits de control (nuevo)
+\end{itemize}
+
+\paragraph{Respuesta 5}
+El directorio de páginas consiste en tener una tabla raíz siempre residente, que almacena las direcciones de memoria de las páginas de la tabla de páginas de procesos.
+
+Esto se realiza porque la tabla de páginas de procesos pueden ser muy grandes, por lo que no es conveniente almacenarla en memoria principal. Por lo tanto la propia tabla de páginas de la memoria virtual se almacena en memoria virtual, y se accede a ella mediante un directorio de tablas de páginas.
+
+En general, si se tienen \(X\) directorios y cada directorio tiene \(Y\) entradas, se tiene un total de \(X\times Y\) direcciones posibles para un proceso.
+
+\paragraph{Respuesta 6}
+El Translation Lookaside Buffer (TLB) es un buffer que almacena la correspondencia de páginas y marcos recientemente utilizadas. Cuando una traducción se encuentra en el TLB, se evita acceder a la tabla de páginas en memoria, reduciendo el costo de la traducción.
+
+\paragraph{Respuesta 7}
+Cuando se combinan la segmentación y la paginación usando memoria virtual, se utiliza una estructura que consiste en lo siguiente: un proceso se divide en segmentos, y ese segmento es paginado. Entonces cada segmento tiene sus propias páginas.
+
+Esto es muy útil ya que se aprovechan las ventajas de cada uno: la facilidad de acceso de la paginación y la modularidad y comodidad para el programador que proporciona la segmentación.
+
+Cuando se requiere localizar una dirección de memoria, se recibe el número de segmento y el offset. El segmento permite localizar la estructura de paginación correspondiente; luego, la tabla de páginas traduce la página a un marco; finalmente, se puede obtener la dirección física utilizando el offset.
+
+\paragraph{Respuesta 8}
+\begin{itemize}
+  \item Carga por demanda: solo se cargan en memoria los segmentos o páginas demandados por el proceso.
+  \item Carga predictiva: se cargan regiones vecinas además de la solicitada, aprovechando el principio de localidad y que los dispositivos de almacenamiento son más eficientes enviando bloques contiguos de información.
+\end{itemize}
+
+\paragraph{Respuesta 9}
+La política de ubicación es irrelevante en la paginación porque todas las páginas y todos los marcos tienen el mismo tamaño. Por tanto, una página puede colocarse en cualquier marco libre disponible y no es necesario buscar un hueco contiguo de un tamaño específico.
+
+\paragraph{Respuesta 10}
+Consiste en determinar qué bloque o marcos se liberarán cuando se solicita una cantidad de memoria que no está disponible. 
+
+En general se tienen dos estrategias: reemplazo local y reemplazo global. El primero reemplaza marcos del mismo proceso que realizó la solicitud y el segundo puede reemplazar cualquier marco de la memoria.
+
+\paragraph{Respuesta 11}
+\begin{itemize}
+  \item Óptimo: reemplaza la página cuya próxima referencia ocurrirá más tarde. Es imposible de realizar en la práctica.
+  \item LRU (Last Recently Used): Reelmplaza la página que lleva más tiempo sin ser referenciada.
+  \item FIFO: Reemplaza la primer página asignada (la más antigua).
+  \item Clock: Utiliza un bit de uso. Si el bit es cero la página no se ha utilizado y puede ser reemplazada. Si es uno se coloca en cero y se le da una segunda oportunidad. La lista de páginas se recorre de forma circular.
+\end{itemize}
