@@ -146,3 +146,19 @@ En general, el número total de discos que pueden fallar depende de cómo se dis
 
 RAID 60 está orientado a sistemas de almacenamiento de gran capacidad donde se busca una alta tolerancia a fallos sin sacrificar tanto espacio como en RAID 10. Comparado con RAID 50, prioriza una mayor redundancia a costa de reducir la capacidad útil y el rendimiento de escritura, ofreciendo un excelente equilibrio entre disponibilidad y aprovechamiento del almacenamiento.
 
+\begin{table}[!ht]
+  \centering
+  \begin{tabular}{l|c}
+    Cantidad de discos mínima & 8 \\\hline
+    Cantidad de discos que pueden fallar & 4 (2\(\times\)RAID 6) \\ \hline
+    Velocidad de escritura relativa a un disco & \(M\times\frac{\text{VDisco}}{\text{Cant. Oper.}}\)~[MB/s] \\\hline
+    Velocidad de escritura ponderada & 2 \\ \hline
+    Velocidad de lectura relativa a un disco & \(M\times\)VDisco~[MB/s] \\ \hline
+    Velocidad de lectura ponderada & 5 \\ \hline
+    Costo & Alto
+  \end{tabular}
+  \caption{Características del RAID 60.}
+  \label{tab:raid60}
+\end{table}
+
+En el cuadro \ref{tab:raid60} \(M\) es la cantidad de arreglos RAID 6 que tiene el volumen RAID 60. Por ejemplo, en la figura \ref{fig:raid60}, \(M=2\) porque hay dos arreglos RAID 6.
