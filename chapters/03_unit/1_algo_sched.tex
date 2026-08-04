@@ -75,14 +75,14 @@ Inanición & No & No & Sí & Sí & No & Sí \\
 
 Para evaluar una política de planificación suele utilizarse el \textit{tiempo de retorno} (\textit{Turnaround Time, TAT}), que representa el tiempo total que un proceso permanece en el sistema:
 \[
-  TAT = \text{Tiempo de espera} + \text{Tiempo de servicio}.
+  \text{TAT} = \text{Tiempo de espera} + \text{Tiempo de servicio}.
 \]
 
 \clearpage
 
 También es frecuente utilizar el \textit{tiempo de retorno normalizado}, definido como
 \[
-TAT_N = \frac{TAT}{s},
+  \text{TAT}_N = \frac{\text{TAT}}{s},
 \]
 el cual mide el retraso relativo experimentado por un proceso. Su valor mínimo es \(1\), correspondiente al caso ideal en que el proceso nunca debe esperar; valores mayores indican una peor calidad del servicio.
 
@@ -127,7 +127,7 @@ FCFS es una política \textit{no expropiativa} y resulta simple de implementar, 
     \draw (10,0) -- (10,3.4) node[above]{20};
     \draw (0,3) -- (10,3);
 
-    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+    \foreach \y\t\c in {.25/E/blue!60,.75/D/red!70!black,1.25/C/blue!60!red,1.75/B/green!60!black,2.25/A/black} {
       \node[left,color=\c] at(0,\y) {\t};
     }
 
@@ -164,7 +164,7 @@ El parámetro más importante de este algoritmo es el \textit{tamaño del quantu
     \draw (10,0) -- (10,3.4) node[above]{20};
     \draw (0,3) -- (10,3);
 
-    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+    \foreach \y\t\c in {.25/E/blue!60,.75/D/red!70!black,1.25/C/blue!60!red,1.75/B/green!60!black,2.25/A/black} {
       \node[left,color=\c] at(0,\y) {\t};
     }
 
@@ -234,7 +234,7 @@ Por lo tanto, las observaciones más recientes tienen mayor influencia sobre la 
     \draw (10,0) -- (10,3.4) node[above]{20};
     \draw (0,3) -- (10,3);
 
-    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+    \foreach \y\t\c in {.25/E/blue!60,.75/D/red!70!black,1.25/C/blue!60!red,1.75/B/green!60!black,2.25/A/black} {
       \node[left,color=\c] at(0,\y) {\t};
     }
 
@@ -278,7 +278,7 @@ Sus principales características son:
     \draw (10,0) -- (10,3.4) node[above]{20};
     \draw (0,3) -- (10,3);
 
-    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+    \foreach \y\t\c in {.25/E/blue!60,.75/D/red!70!black,1.25/C/blue!60!red,1.75/B/green!60!black,2.25/A/black} {
       \node[left,color=\c] at(0,\y) {\t};
     }
 
@@ -323,7 +323,7 @@ Al igual que SPN y SRT, HRRN requiere una estimación del tiempo de servicio de 
     \draw (10,0) -- (10,3.4) node[above]{20};
     \draw (0,3) -- (10,3);
 
-    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+    \foreach \y\t\c in {.25/E/blue!60,.75/D/red!70!black,1.25/C/blue!60!red,1.75/B/green!60!black,2.25/A/black} {
       \node[left,color=\c] at(0,\y) {\t};
     }
 
@@ -356,7 +356,7 @@ Dentro de cada cola se utiliza normalmente una política FCFS o Round Robin. Los
     \draw (10,0) -- (10,3.4) node[above]{20};
     \draw (0,3) -- (10,3);
 
-    \foreach \y\t\c in {.25/A/blue!60,.75/B/red!70!black,1.25/C/blue!60!red,1.75/D/green!60!black,2.25/E/black} {
+    \foreach \y\t\c in {.25/E/blue!60,.75/D/red!70!black,1.25/C/blue!60!red,1.75/B/green!60!black,2.25/A/black} {
       \node[left,color=\c] at(0,\y) {\t};
     }
 
