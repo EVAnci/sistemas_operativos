@@ -25,7 +25,7 @@ El objetivo de la planificación del procesador es asignar procesos a uno o vari
         minimum height=1.3cm,
         shape=ellipse,
         inner sep=0pt,
-        font=\small,
+        font=\footnotesize,
         text=black,
         outer color=white!85!green!85!blue,
         inner color=white,
@@ -36,7 +36,7 @@ El objetivo de la planificación del procesador es asignar procesos a uno o vari
     \node[state, right=1.3cm of sready] (ready) {Listo};
     \node[state, below=2cm of ready] (blocked) {Bloqueado};
     \node[state, right=1.3cm of ready] (run) {Ejecutando};
-    \node[state, right=1.3cm of run] (exit) {Finalizado};
+    \node[state, right=1.1cm of run] (exit) {Finalizado};
     \node[state, below=2cm of sready] (sblock) {Bloqueado\\Suspendido};
     \path (sready.north) -- coordinate (midnew) (ready.north);
     \node[state, above=2cm of midnew] (new) {Nuevo};

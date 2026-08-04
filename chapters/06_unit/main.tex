@@ -49,11 +49,11 @@ Esto se ilustra en la figura \ref{fig:raid_anidado}.
 
 \begin{figure}[!ht]
   \centering
-  \begin{tikzpicture}[>=Stealth]
-    \node[text width=2cm, align=center] (D) {Discos Físicos};
-    \node[text width=3cm, align=center,draw,rectangle,fill=gray!20,right=of D] (RI) {RAID de nivel inferior};
-    \node[text width=3cm, align=center,draw,rectangle,fill=white!95!blue!93!green,right=of RI] (RS) {RAID de nivel superior};
-    \node[text width=2cm, align=center,right=of RS] (F) {Volumen final};
+  \begin{tikzpicture}[>=Stealth,font=\footnotesize]
+    \node[text width=1.8cm, align=center] (D) {Discos Físicos};
+    \node[text width=2.5cm, align=center,draw,rectangle,fill=gray!20,right=of D] (RI) {RAID de nivel inferior};
+    \node[text width=2.5cm, align=center,draw,rectangle,fill=white!95!blue!93!green,right=of RI] (RS) {RAID de nivel superior};
+    \node[text width=1.8cm, align=center,right=of RS] (F) {Volumen final};
     \draw[->] (D.east) -- (RI.west);
     \draw[->] (RI.east) -- (RS.west);
     \draw[->] (RS.east) -- (F.west);
