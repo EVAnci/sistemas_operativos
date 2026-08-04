@@ -1,0 +1,383 @@
+\chapter{Virtualización}
+
+La \textit{virtualización} es una técnica que permite crear una representación lógica de una computadora sobre un hardware físico existente. En lugar de ejecutar un sistema operativo directamente sobre el hardware, se introduce una capa de software denominada \textit{hipervisor} o \textit{virtualizador}, encargada de presentar a cada sistema operativo un conjunto de recursos que aparentan ser una computadora completa e independiente.
+
+Desde la perspectiva del sistema operativo invitado, la máquina virtual dispone de todos los componentes de una computadora real, como procesador, memoria principal, dispositivos de almacenamiento, interfaces de red, controladores y otros periféricos. Sin embargo, estos recursos no existen de manera exclusiva para la máquina virtual, sino que son abstraídos y administrados por el hipervisor a partir de los recursos físicos del equipo anfitrión.\footnote{Un sistema operativo invitado es aquel que corre en la maquina virtual. El sistema operativo anfitrión se ejecuta directamente sobre el hardware.}
+
+Cada máquina virtual se ejecuta de forma aislada sobre el hipervisor. El hipervisor es responsable de asignar tiempo de CPU, memoria y acceso a los dispositivos físicos, de modo que cada máquina virtual funcione de forma aislada de las demás y, en el caso de los hipervisores alojados, también del sistema operativo anfitrión.
+
+La virtualización se basa en dos conceptos fundamentales:
+\begin{itemize}
+  \item \textit{Abstracción:} el hipervisor presenta al sistema operativo invitado un hardware virtual que puede diferir del hardware físico real. Como consecuencia, el sistema operativo interactúa únicamente con los dispositivos virtuales que le ofrece el hipervisor, sin conocer las características reales de la computadora donde se ejecuta.
+  \item \textit{Portabilidad:} una máquina virtual puede trasladarse de un equipo físico a otro conservando el mismo hardware virtual. Si ambos equipos utilizan un hipervisor compatible y una configuración equivalente, el sistema operativo invitado continúa ejecutándose sin modificaciones, ya que siempre percibe el mismo conjunto de dispositivos virtuales.
+\end{itemize}
+
+\section{¿Por qué es posible virtualizar?}
+
+La virtualización es posible gracias al incremento sostenido de la capacidad de procesamiento y memoria de los equipos modernos. En la mayoría de los casos, una computadora utiliza únicamente una fracción de sus recursos disponibles, dejando capacidad ociosa que puede aprovecharse para ejecutar múltiples sistemas operativos de manera simultánea.
+
+El hipervisor distribuye dinámicamente los recursos físicos entre las distintas máquinas virtuales, asignando tiempo de procesador, memoria y acceso a los dispositivos según las necesidades de cada una. Esto permite que varias máquinas virtuales compartan el mismo hardware sin interferir entre sí.
+
+Además del mejor aprovechamiento de los recursos, la virtualización simplifica la administración de distintos entornos de trabajo. En lugar de disponer de una computadora física para cada sistema operativo o aplicación, es posible ejecutar varias máquinas virtuales sobre un único equipo, reduciendo los costos de hardware, consumo energético y mantenimiento.
+
+Otra ventaja importante es la independencia entre el hardware físico y el sistema operativo invitado. Como este interactúa únicamente con dispositivos virtuales, una máquina virtual puede copiarse, respaldarse o migrarse a otro equipo compatible sin necesidad de reinstalar el sistema operativo ni reconfigurar sus controladores.
+
+\subsubsection{Ventajas de la Virtualización}
+
+La virtualización ofrece numerosas ventajas tanto desde el punto de vista técnico como económico. Al desacoplar el sistema operativo del hardware físico, permite mejorar el aprovechamiento de los recursos, simplificar la administración de los sistemas y aumentar la disponibilidad de los servicios.
+\begin{enumerate}
+  \item \textit{Uso de hardware heredado:} La virtualización permite ejecutar sistemas operativos y aplicaciones antiguas sobre hardware moderno. Esto resulta especialmente útil para organizaciones que dependen de software desarrollado para plataformas obsoletas y cuya actualización implicaría elevados costos o riesgos operativos. La máquina virtual proporciona el hardware que dicho sistema espera encontrar, independientemente de las características del equipo físico.
+  \item \textit{Implementación rápida:} Una máquina virtual está compuesta principalmente por un conjunto de archivos que contienen el disco virtual y su configuración. Como consecuencia, crear nuevas instancias consiste simplemente en copiar estos archivos o utilizar una plantilla, permitiendo desplegar múltiples máquinas en poco tiempo.
+  \item \textit{Versatilidad y mejor aprovechamiento del hardware:} En lugar de dedicar un servidor físico a una única aplicación o sistema operativo, es posible ejecutar varias máquinas virtuales simultáneamente sobre el mismo equipo. De esta forma se incrementa la utilización de los recursos disponibles, reduciendo el tiempo en que el hardware permanece ocioso.
+  \item \textit{Consolidación de servidores:} La virtualización permite reemplazar varios servidores físicos por un número reducido de equipos de mayor capacidad. Esto disminuye los costos de adquisición de hardware, consumo eléctrico, refrigeración, espacio físico y mantenimiento, simplificando además la infraestructura del centro de datos.
+  \item \textit{Asignación dinámica de recursos:} Los recursos asignados a una máquina virtual, como la memoria principal, la cantidad de procesadores virtuales o el almacenamiento, pueden modificarse con mucha mayor facilidad que en una computadora física. Esto permite adaptar la configuración de cada máquina a las necesidades de la carga de trabajo sin reemplazar el hardware.
+  \item \textit{Facilidad de administración:} La gestión de máquinas virtuales resulta más sencilla que la de equipos físicos. Es posible crear copias de seguridad completas, clonar sistemas, restaurar instantáneas (\textit{snapshots}), automatizar despliegues y migrar máquinas entre distintos servidores, simplificando las tareas de mantenimiento y recuperación.
+  \item \textit{Mayor disponibilidad y tolerancia a fallos:} En entornos con múltiples servidores físicos, las máquinas virtuales pueden formar parte de un clúster de virtualización. Si un servidor presenta una falla de hardware, las máquinas virtuales pueden reiniciarse o migrarse hacia otro host compatible, siempre que el almacenamiento sea compartido o las imágenes de las máquinas estén disponibles. Esto reduce significativamente el tiempo de interrupción de los servicios y mejora la continuidad operativa.
+\end{enumerate}
+
+\section{Enfoques de Virtualización}
+
+Existen distintos enfoques para implementar la virtualización. Cada uno presenta un compromiso diferente entre compatibilidad, rendimiento y grado de aislamiento. La elección de una técnica depende del sistema operativo que se desea ejecutar, de la arquitectura del hardware y de los requerimientos de rendimiento.
+
+\subsection{Virtualización completa}
+
+La \textit{virtualización completa} consiste en presentar al sistema operativo invitado una computadora completamente virtual, de manera que este se ejecute sin necesidad de realizar modificaciones. Desde su punto de vista, dispone de un procesador, memoria, dispositivos de almacenamiento y periféricos equivalentes a los de una computadora física.
+
+El encargado de crear y administrar este hardware virtual es el \textit{hipervisor}. Todas las instrucciones emitidas por el sistema operativo invitado son ejecutadas bajo su supervisión. Las instrucciones de usuario pueden ejecutarse directamente sobre el procesador cuando el hardware lo permite, mientras que las instrucciones privilegiadas son interceptadas por el hipervisor, quien decide cómo responder a ellas.
+
+Por ejemplo, si el sistema operativo intenta apagar la computadora, no puede permitirse que dicha instrucción afecte al equipo físico. En ese caso, el hipervisor intercepta la operación y realiza la acción equivalente sobre la máquina virtual, preservando el funcionamiento del resto de las máquinas virtuales y del sistema anfitrión.
+
+Originalmente, este mecanismo implicaba traducir o emular ciertas instrucciones privilegiadas, lo que introducía una sobrecarga de ejecución. Actualmente, la mayoría de los procesadores incorporan extensiones de virtualización por hardware que reducen considerablemente dicho costo.
+
+En general, la virtualización completa requiere que el sistema operativo invitado sea compatible con la arquitectura del procesador físico. Por ejemplo, un sistema operativo diseñado para la arquitectura \texttt{x86-64} debe ejecutarse sobre un procesador que implemente dicha arquitectura.
+
+\subsection{Paravirtualización}
+
+La \textit{paravirtualización} es una técnica de virtualización en la que el sistema operativo invitado es modificado para que sea consciente de que se está ejecutando en un entorno virtualizado. Gracias a ello, puede colaborar directamente con el hipervisor, reduciendo la sobrecarga asociada a la virtualización completa.
+
+En un esquema de virtualización completa, el hipervisor debe interceptar y gestionar las instrucciones privilegiadas emitidas por el sistema operativo invitado. En cambio, en la paravirtualización estas instrucciones son reemplazadas por llamadas explícitas al hipervisor, denominadas \textit{hypercalls}. De esta manera, el sistema operativo solicita directamente los servicios que requieren privilegios especiales, evitando que el hipervisor deba detectar e interpretar dichas instrucciones durante la ejecución.
+
+Las instrucciones no privilegiadas continúan ejecutándose directamente sobre el procesador, mientras que únicamente las operaciones que requieren acceso a recursos protegidos son enviadas al hipervisor mediante su interfaz de programación (API). Como consecuencia, disminuye el número de interrupciones al hipervisor y se reduce la sobrecarga de ejecución, obteniéndose un mejor rendimiento.
+
+Otra ventaja de este enfoque es que los dispositivos virtuales pueden utilizar interfaces de comunicación especialmente diseñadas para la virtualización. En lugar de emular completamente un dispositivo físico, el sistema operativo invitado emplea controladores (\textit{drivers paravirtualizados}) capaces de intercambiar información directamente con el hipervisor mediante protocolos optimizados. Posteriormente, el hipervisor traduce estas solicitudes hacia los controladores de los dispositivos físicos del sistema anfitrión.
+
+La principal limitación de la paravirtualización es que requiere modificar el sistema operativo invitado para incorporar soporte para las \textit{hypercalls} y los controladores paravirtualizados. Por este motivo, resulta adecuada para sistemas operativos cuyo código fuente puede adaptarse, mientras que no puede aplicarse fácilmente a sistemas propietarios que no permiten este tipo de modificaciones.
+
+\subsection{Virtualización basada en contenedores}
+
+La virtualización mediante \textit{contenedores} adopta un enfoque diferente. En lugar de virtualizar una computadora completa, múltiples aplicaciones se ejecutan de forma aislada compartiendo el mismo núcleo (\textit{kernel}) del sistema operativo anfitrión.
+
+Como no es necesario emular un procesador, dispositivos ni un sistema operativo completo, el consumo de recursos es mucho menor y el tiempo de inicio de cada contenedor es considerablemente más reducido que el de una máquina virtual.
+
+El aislamiento entre aplicaciones se logra mediante mecanismos del propio sistema operativo, como espacios de nombres (\textit{namespaces}) y grupos de control (\textit{cgroups}) en Linux.
+
+Según la cantidad de componentes que incluyen, los contenedores suelen clasificarse en:
+\begin{itemize}
+  \item \textit{Contenedores gruesos:} contienen un entorno de usuario relativamente completo, con bibliotecas, herramientas y servicios propios, aunque siguen compartiendo el kernel del sistema anfitrión.
+  \item \textit{Contenedores finos:} incluyen únicamente la aplicación y sus dependencias esenciales, compartiendo la mayor cantidad posible de componentes con el sistema anfitrión. Esto reduce aún más el consumo de recursos.
+\end{itemize}
+La principal limitación de este enfoque es que todos los contenedores deben utilizar el mismo kernel que el sistema operativo anfitrión. Por ejemplo, un host Linux puede ejecutar múltiples distribuciones Linux dentro de contenedores, pero no puede ejecutar un sistema Windows mediante esta técnica.
+
+\subsection{Emulación}
+
+La \textit{emulación} consiste en reproducir completamente el funcionamiento de otra arquitectura de hardware mediante software.
+
+A diferencia de la virtualización, el sistema emulado no necesita ser compatible con el hardware físico. Esto permite ejecutar sistemas operativos y aplicaciones diseñados para arquitecturas completamente diferentes, como procesadores ARM sobre una computadora con arquitectura \texttt{x86-64}, o viceversa.
+
+La emulación ofrece una gran flexibilidad, pero tiene un costo elevado en rendimiento, ya que cada instrucción del procesador emulado debe interpretarse o traducirse antes de ejecutarse en el procesador físico. Como consecuencia, su velocidad es significativamente inferior a la obtenida mediante virtualización.
+
+Por esta razón, la emulación suele emplearse para tareas de desarrollo, depuración, compatibilidad con hardware antiguo o ejecución de software destinado a arquitecturas distintas.
+
+\subsection{Soporte de virtualización por hardware}
+
+Los procesadores modernos incorporan extensiones específicas para facilitar la virtualización y reducir la sobrecarga que implicaba interceptar las instrucciones privilegiadas mediante software.
+
+Estas tecnologías permiten que el procesador colabore directamente con el hipervisor, mejorando el aislamiento entre máquinas virtuales y aumentando el rendimiento.
+
+Entre las extensiones más conocidas se encuentran:
+\begin{itemize}
+  \item \textit{Intel VT-x}: proporciona soporte para la virtualización de procesadores.
+  \item \textit{Intel VT-d}: incorpora virtualización de dispositivos de entrada/salida (I/O), permitiendo asignar dispositivos físicos directamente a una máquina virtual.
+  \item \textit{AMD-V}: conjunto de extensiones equivalentes desarrollado por AMD para la virtualización de procesadores.
+\end{itemize}
+Estas tecnologías constituyen la base de los hipervisores modernos y serán analizadas con mayor detalle en secciones posteriores.
+
+\section{Desafíos del Hipervisor}
+
+El hipervisor constituye el componente central de un entorno de virtualización. Su objetivo es permitir que múltiples máquinas virtuales compartan el mismo hardware físico de forma segura, eficiente y transparente. Para lograrlo, debe resolver tres desafíos fundamentales: la administración del procesador, la gestión de la memoria y el acceso a los dispositivos de entrada/salida.
+
+\subsection{Administración de la ejecución del procesador}
+
+Uno de los principales desafíos consiste en controlar la ejecución de las instrucciones emitidas por los sistemas operativos invitados.
+
+Las instrucciones no privilegiadas pueden ejecutarse directamente sobre el procesador cuando el hardware de virtualización lo permite. Sin embargo, las instrucciones privilegiadas, que normalmente modificarían el estado del procesador o accederían directamente al hardware, deben ser interceptadas por el hipervisor. Este decide cómo procesarlas para mantener el aislamiento entre las máquinas virtuales y evitar que una de ellas afecte al sistema anfitrión o a otras máquinas virtuales.
+
+Además, el hipervisor realiza la planificación del procesador, asignando tiempo de CPU a cada máquina virtual y efectuando los cambios de contexto necesarios para compartir los núcleos físicos entre múltiples sistemas invitados.
+
+\subsection{Administración de la memoria}
+
+Otro desafío importante es la gestión de la memoria principal.
+
+Cada sistema operativo invitado administra su propia memoria virtual mediante sus tablas de páginas, creyendo disponer de memoria física exclusiva. Sin embargo, dicha memoria corresponde en realidad a regiones de la memoria física del equipo anfitrión.
+
+Por esta razón, el hipervisor debe realizar una segunda traducción de direcciones, relacionando la memoria física que percibe cada máquina virtual con la memoria física real del sistema. Asimismo, debe garantizar que las regiones asignadas a distintas máquinas virtuales no se superpongan, preservando el aislamiento y la protección entre ellas.
+
+Las extensiones modernas de virtualización por hardware incorporan mecanismos específicos para acelerar estas traducciones, reduciendo el costo asociado a la administración de memoria.
+
+\subsection{Administración de dispositivos de entrada/salida}
+
+El acceso a los dispositivos de entrada/salida representa otro desafío fundamental. Los sistemas operativos invitados interactúan con dispositivos virtuales, mientras que el hipervisor debe coordinar el acceso a los dispositivos físicos correspondientes.
+
+Esto implica emular controladores de almacenamiento, interfaces de red, dispositivos USB, placas de sonido, adaptadores gráficos y otros periféricos. El hipervisor traduce las operaciones realizadas sobre los dispositivos virtuales hacia el hardware físico, asegurando que varias máquinas virtuales puedan compartir los mismos recursos sin interferencias.
+
+En algunos casos, cuando el hardware lo permite, ciertos dispositivos pueden asignarse directamente a una máquina virtual mediante mecanismos de virtualización de E/S, reduciendo la sobrecarga y mejorando el rendimiento.
+
+\section{Funciones del Hipervisor}
+
+Además de proporcionar la capa de virtualización, el hipervisor administra todos los recursos compartidos del sistema y coordina el funcionamiento de las máquinas virtuales. Sus principales funciones son las siguientes.
+
+\subsection{Administración de la ejecución de las máquinas virtuales}
+
+El hipervisor actúa como administrador de los recursos físicos del sistema. Se encarga de crear las máquinas virtuales, planificar su ejecución, asignarles tiempo de procesador y realizar los cambios de contexto necesarios para alternar su ejecución.
+
+Asimismo, garantiza el aislamiento entre las distintas máquinas virtuales, evitando que los errores o fallos de una afecten a las demás.
+
+\subsection{Emulación de dispositivos y control de acceso}
+
+Cada máquina virtual dispone de un conjunto de dispositivos virtuales que el hipervisor presenta como si fueran hardware real.
+
+Para ello, emula controladores de almacenamiento, interfaces de red, adaptadores gráficos y otros dispositivos, estableciendo la correspondencia entre los recursos virtuales y los dispositivos físicos disponibles en el equipo anfitrión.
+
+Además, controla los permisos de acceso para asegurar que cada máquina virtual utilice únicamente los recursos que le fueron asignados.
+
+\subsection{Gestión de operaciones privilegiadas}
+
+Las operaciones privilegiadas emitidas por los sistemas operativos invitados son interceptadas por el hipervisor.
+
+Este analiza cada solicitud y ejecuta la acción correspondiente sobre la máquina virtual, manteniendo la integridad del sistema anfitrión y del resto de las máquinas virtuales. De esta manera, operaciones como modificar registros del procesador, acceder a dispositivos o apagar el sistema afectan únicamente al entorno virtual correspondiente.
+
+\subsection{Administración del ciclo de vida de las máquinas virtuales}
+
+El hipervisor controla todas las etapas del funcionamiento de una máquina virtual.
+
+Entre sus responsabilidades se encuentran la creación, el inicio, la suspensión, la reanudación, el reinicio, el apagado y la eliminación de las máquinas virtuales. También puede gestionar instantáneas (\textit{snapshots}), clonación y migración entre distintos servidores cuando la plataforma lo soporta.
+
+\subsection{Administración de la plataforma}
+
+Finalmente, el hipervisor proporciona los mecanismos necesarios para administrar toda la infraestructura de virtualización.
+
+Esto incluye herramientas de configuración, monitoreo de recursos, gestión de usuarios, creación de redes virtuales, administración del almacenamiento y supervisión del estado de las máquinas virtuales. En plataformas empresariales, estas funciones suelen integrarse mediante interfaces gráficas o herramientas de administración remota que permiten controlar grandes infraestructuras de virtualización desde un único punto.
+
+\section{Tipos de Hipervisores}
+
+Los hipervisores se clasifican en dos grandes categorías según la forma en que se integran con el hardware y el sistema operativo anfitrión. Esta diferencia influye directamente en el rendimiento, la administración de los recursos y los casos de uso para los que resultan más adecuados.
+
+\subsection{Hipervisor de Tipo 1}
+
+Un \textit{hipervisor de Tipo 1} (\textit{Bare-Metal}) se instala directamente sobre el hardware físico, sin necesidad de un sistema operativo anfitrión. En este caso, el hipervisor constituye la primera capa de software que se ejecuta al iniciar el equipo y es el responsable de administrar todos los recursos físicos disponibles.
+
+Desde el punto de vista funcional, el hipervisor desempeña un rol similar al de un sistema operativo, ya que planifica el uso del procesador, administra la memoria, controla los dispositivos de entrada/salida y gestiona el ciclo de vida de las máquinas virtuales. Cada máquina virtual puede considerarse una entidad de ejecución independiente administrada por el propio hipervisor.
+
+Al acceder directamente al hardware, se elimina la sobrecarga que implicaría un sistema operativo anfitrión, lo que permite obtener un mejor rendimiento y una utilización más eficiente de los recursos. Por este motivo, los hipervisores de Tipo 1 son la opción predominante en servidores, centros de datos e infraestructuras de computación en la nube.
+
+\begin{figure}[!ht]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize]
+    \node[font=\bfseries] (vm1) {VM};
+    \node[draw,rectangle,fill=gray!10,text width=2cm,align=center,below=0.1cm of vm1] (apps1) {Aplicaciones};
+    \node[draw,rectangle,fill=blue!8,text width=2cm,align=center,below=0.1cm of apps1] (lib1) {Librerías};
+    \node[draw,rectangle,fill=red!18,text width=2cm,align=center,below=0.1cm of lib1] (so1) {SO Invitado};
+    \begin{scope}[on background layer]
+      \node[draw, rectangle, fill=gray!40, fit=(vm1) (so1), inner sep=0.2cm, rounded corners] (vmb1) {};
+    \end{scope}
+
+    \node[font=\bfseries,right=1.8cm of vm1] (vm2) {VM};
+    \node[draw,rectangle,fill=gray!10,text width=2cm,align=center,below=0.1cm of vm2] (apps2) {Aplicaciones};
+    \node[draw,rectangle,fill=blue!8,text width=2cm,align=center,below=0.1cm of apps2] (lib2) {Librerías};
+    \node[draw,rectangle,fill=red!18,text width=2cm,align=center,below=0.1cm of lib2] (so2) {SO Invitado};
+    \begin{scope}[on background layer]
+      \node[draw, rectangle, fill=gray!40, fit=(vm2) (so2), inner sep=0.2cm, rounded corners] (vmb2) {};
+    \end{scope}
+
+    \coordinate (co_top_right)  at ([xshift=-0.15cm]vmb1.north west);
+    \coordinate (co_bot_left) at ([xshift=-2.55cm]vmb1.south west);
+
+    \node[draw, rectangle, fill=orange!15, fit=(co_top_right) (co_bot_left), inner sep=0pt, rounded corners] (co) {};
+    \node[align=center, text width=2cm] at (co.center) {Consola VMM};
+
+    \coordinate (hv_top_left)  at ([yshift=-0.1cm]co.south west);
+    \coordinate (hv_bot_right) at ([yshift=-1.9cm]vmb2.south east);
+
+    \node[draw, rectangle, fill=teal!10, fit=(hv_top_left) (hv_bot_right), inner sep=0pt, rounded corners] (hv) {};
+    \node at (hv.center) {Hipervisor Tipo 1 (VMM)};
+
+    \coordinate (hw_top_left)  at ([yshift=-0.1cm]hv.south west);
+    \coordinate (hw_bot_right) at ([yshift=-1cm]hv_bot_right);
+
+    \node[draw, rectangle, fill=gray!20, fit=(hw_top_left) (hw_bot_right), inner sep=0pt, rounded corners] (hw) {};
+    \node at (hw.center) {Hardware};
+  \end{tikzpicture}
+  \caption{Hipervisor de tipo 1.}
+\end{figure}
+
+Otra característica importante es el aislamiento entre las máquinas virtuales. Cada una se ejecuta en un entorno independiente administrado por el hipervisor, de modo que un fallo o compromiso de una máquina virtual no afecta directamente a las demás. No obstante, la seguridad global continúa dependiendo de la robustez del propio hipervisor y del hardware subyacente, ya que existen vulnerabilidades capaces de comprometer estas capas.
+
+\subsection{Hipervisor de Tipo 2}
+
+Un \textit{hipervisor de Tipo 2} (\textit{Hosted}) se ejecuta como una aplicación sobre un sistema operativo anfitrión previamente instalado. En este esquema, el sistema operativo continúa administrando directamente el hardware, mientras que el hipervisor utiliza los servicios proporcionados por dicho sistema para crear y ejecutar las máquinas virtuales.
+
+En consecuencia, el acceso al hardware requiere una capa adicional de software, lo que introduce una mayor sobrecarga y reduce el rendimiento respecto de un hipervisor de Tipo 1. Además, las máquinas virtuales deben compartir los recursos del equipo con las aplicaciones nativas que se ejecutan en el sistema anfitrión.
+
+A pesar de esta pérdida de rendimiento, los hipervisores de Tipo 2 ofrecen una instalación sencilla y una gran facilidad de uso, por lo que son ampliamente utilizados en computadoras personales para desarrollo, pruebas, laboratorios y ejecución simultánea de distintos sistemas operativos.
+
+Como el hipervisor depende del sistema operativo anfitrión, la estabilidad y seguridad de las máquinas virtuales también dependen del correcto funcionamiento de dicho sistema. Un fallo o compromiso del sistema operativo anfitrión puede afectar a todas las máquinas virtuales que se estén ejecutando sobre él.
+
+\begin{figure}[!ht]
+  \centering
+  \begin{tikzpicture}[font=\footnotesize]
+    \node[font=\bfseries] (vm1) {VM};
+    \node[draw,rectangle,fill=gray!10,text width=2cm,align=center,below=0.1cm of vm1] (apps1) {Aplicaciones};
+    \node[draw,rectangle,fill=blue!8,text width=2cm,align=center,below=0.1cm of apps1] (lib1) {Librerías};
+    \node[draw,rectangle,fill=red!18,text width=2cm,align=center,below=0.1cm of lib1] (so1) {SO Invitado};
+    \begin{scope}[on background layer]
+      \node[draw, rectangle, fill=gray!40, fit=(vm1) (so1), inner sep=0.2cm, rounded corners] (vmb1) {};
+    \end{scope}
+
+    \node[font=\bfseries,right=1.8cm of vm1] (vm2) {VM};
+    \node[draw,rectangle,fill=gray!10,text width=2cm,align=center,below=0.1cm of vm2] (apps2) {Aplicaciones};
+    \node[draw,rectangle,fill=blue!8,text width=2cm,align=center,below=0.1cm of apps2] (lib2) {Librerías};
+    \node[draw,rectangle,fill=red!18,text width=2cm,align=center,below=0.1cm of lib2] (so2) {SO Invitado};
+    \begin{scope}[on background layer]
+      \node[draw, rectangle, fill=gray!40, fit=(vm2) (so2), inner sep=0.2cm, rounded corners] (vmb2) {};
+    \end{scope}
+
+    \coordinate (hv_top_left)  at ([yshift=-0.1cm]vmb1.south west);
+    \coordinate (hv_bot_right) at ([yshift=-1cm]vmb2.south east);
+    \coordinate (co_top_left)  at ([xshift=0.15cm]vmb2.north east);
+    \coordinate (co_bot_right) at ([xshift=2.55cm]hv_bot_right);
+
+    \node[draw, rectangle, fill=teal!10, fit=(hv_top_left) (hv_bot_right), inner sep=0pt, rounded corners] (hv) {};
+    \node[draw, rectangle, fill=violet!15, fit=(co_top_left) (co_bot_right), inner sep=0pt, rounded corners] (co) {};
+    \node at (hv.center) {Hipervisor Tipo 2};
+    \node[align=center, text width=2cm] at (co.center) {Otras Aplicaciones};
+
+    \coordinate (soh_top_left)  at ([yshift=-0.1cm]hv.south west);
+    \coordinate (soh_bot_right) at ([yshift=-1cm]co_bot_right);
+
+    \node[draw, rectangle, fill=orange!20, fit=(soh_top_left) (soh_bot_right), inner sep=0pt, rounded corners] (soh) {};
+    \node at (soh.center) {SO Anfitrión};
+
+    \coordinate (hw_top_left)  at ([yshift=-0.1cm]soh.south west);
+    \coordinate (hw_bot_right) at ([yshift=-1cm]soh_bot_right);
+
+    \node[draw, rectangle, fill=gray!20, fit=(hw_top_left) (hw_bot_right), inner sep=0pt, rounded corners] (hw) {};
+    \node at (hw.center) {Hardware};
+  \end{tikzpicture}
+  \caption{Hipervisor de tipo 2.}
+\end{figure}
+
+\section{Soporte de Virtualización por Hardware}
+
+La virtualización por software permitió ejecutar múltiples sistemas operativos sobre un mismo equipo, pero introducía una importante sobrecarga, ya que el hipervisor debía intervenir constantemente para administrar la ejecución del procesador, la memoria y los dispositivos de entrada/salida.
+
+Para reducir esta sobrecarga, los fabricantes de procesadores incorporaron extensiones de virtualización por hardware. Estas tecnologías permiten que determinadas operaciones sean ejecutadas directamente por el procesador o por el chipset, disminuyendo la cantidad de intervenciones del hipervisor y mejorando significativamente el rendimiento.
+
+Las principales tecnologías son:
+\begin{itemize}
+  \item \textit{Intel VT-x} (o \textit{AMD-V}): optimiza la virtualización del procesador.
+  \item \textit{Intel VT-d}: proporciona soporte para la virtualización de memoria y dispositivos de entrada/salida.
+  \item \textit{Intel VT-c}: incorpora mecanismos para acelerar la virtualización de las comunicaciones de red.
+\end{itemize}
+
+Cada una de estas tecnologías aborda uno o más de los desafíos fundamentales de un hipervisor: la administración del procesador, la gestión de la memoria y el acceso a los dispositivos de entrada/salida.
+
+\subsection{Intel VT-x}
+
+\textit{Intel VT-x} (\textit{Virtualization Technology for x86}) es la tecnología de Intel que proporciona soporte de hardware para la ejecución de máquinas virtuales. Su equivalente en los procesadores AMD es \textit{AMD-V} (\textit{AMD Virtualization}).
+
+Antes de la aparición de esta tecnología, los hipervisores debían interceptar y analizar prácticamente todas las instrucciones privilegiadas emitidas por los sistemas operativos invitados. Este mecanismo incrementaba la sobrecarga y reducía el rendimiento de la virtualización completa.
+
+En un sistema operativo tradicional, los niveles de privilegio del procesador se organizan mediante anillos (\textit{rings}). En la práctica, la mayoría de los sistemas modernos utilizan únicamente:
+\begin{itemize}
+  \item \textit{Ring 0}: ejecución del núcleo del sistema operativo, con acceso privilegiado al hardware.
+  \item \textit{Ring 3}: ejecución de las aplicaciones de usuario.
+\end{itemize}
+En los primeros sistemas de virtualización, el hipervisor ocupaba el nivel de mayor privilegio y el sistema operativo invitado debía ejecutarse con privilegios inferiores. Como consecuencia, el hipervisor debía interceptar continuamente las operaciones privilegiadas para emular el comportamiento esperado.
+
+VT-x incorpora un nuevo modo de ejecución para la virtualización, permitiendo distinguir entre:
+\begin{itemize}
+  \item \textit{VMX Root Mode}: utilizado por el hipervisor.
+  \item \textit{VMX Non-Root Mode}: utilizado por las máquinas virtuales.
+\end{itemize}
+Gracias a este mecanismo, muchas instrucciones pueden ejecutarse directamente sobre el procesador sin intervención del hipervisor. Solamente aquellas operaciones que realmente requieren privilegios generan una salida de la máquina virtual (\textit{VM Exit}), transfiriendo temporalmente el control al hipervisor.
+
+Como consecuencia, disminuye considerablemente la cantidad de cambios de contexto y el rendimiento de las máquinas virtuales se aproxima al de una ejecución nativa.
+
+\subsection{Intel VT-d}
+
+\textit{Intel VT-d} (\textit{Virtualization Technology for Directed I/O}) incorpora soporte de hardware para la virtualización de los dispositivos de entrada/salida.
+
+Su objetivo principal es reducir la sobrecarga asociada al acceso de las máquinas virtuales al hardware físico, además de garantizar el aislamiento entre ellas durante las operaciones de E/S.
+
+VT-d aborda principalmente dos de los desafíos del hipervisor:
+\begin{itemize}
+  \item la administración de la memoria utilizada por los dispositivos;
+  \item el acceso de los dispositivos físicos desde las máquinas virtuales.
+\end{itemize}
+Sus principales funciones son:
+\begin{itemize}
+  \item Remapeo de DMA asistido por hardware.
+  \item Asignación directa de dispositivos a máquinas virtuales.
+  \item Remapeo y distribución de interrupciones.
+\end{itemize}
+
+\subsubsection{Remapeo de DMA}
+
+Los dispositivos de entrada/salida utilizan DMA para acceder directamente a la memoria principal sin involucrar continuamente al procesador.
+
+En un entorno virtualizado, esto representa un problema, ya que un dispositivo podría acceder accidentalmente a regiones de memoria pertenecientes a otra máquina virtual.
+
+VT-d incorpora una \textit{IOMMU}\footnote{IOMMU:Input/Output Memory Management Unit}, encargada de traducir y validar las direcciones utilizadas por los dispositivos durante las operaciones DMA. De esta manera, cada dispositivo únicamente puede acceder al espacio de memoria asignado a la máquina virtual correspondiente, preservando el aislamiento entre ellas.
+
+\subsubsection{Virtualización de dispositivos}
+
+VT-d permite diferentes estrategias para proporcionar dispositivos de entrada/salida a las máquinas virtuales.
+
+\paragraph{Emulación}
+El hipervisor implementa por software un dispositivo virtual compatible con un dispositivo físico existente. El sistema operativo invitado utiliza los controladores tradicionales sin modificaciones.
+
+Este enfoque ofrece una elevada compatibilidad, aunque introduce una mayor sobrecarga debido al proceso de emulación.
+
+\paragraph{Interfaces paravirtualizadas}
+En lugar de emular completamente un dispositivo físico, el sistema operativo invitado utiliza controladores especialmente diseñados para comunicarse directamente con el hipervisor.
+
+Estos dispositivos virtuales, denominados \textit{interfaces sintéticas}, eliminan gran parte del costo asociado a la emulación y ofrecen un rendimiento considerablemente superior. Su principal limitación es que requieren controladores específicos dentro del sistema operativo invitado.
+
+\paragraph{Asignación directa de dispositivos (\textit{PCI Passthrough})}
+VT-d permite asignar un dispositivo PCI Express completo a una única máquina virtual.
+
+En este caso, el sistema operativo invitado instala directamente el controlador del dispositivo físico y accede a él sin necesidad de emulación. Como consecuencia, el rendimiento es prácticamente idéntico al de una ejecución nativa.
+
+La principal limitación es que dicho dispositivo deja de estar disponible tanto para el sistema anfitrión como para el resto de las máquinas virtuales.
+
+\paragraph{Compartición de dispositivos mediante SR-IOV}
+Algunos dispositivos, especialmente las interfaces de red de servidores, permiten ser compartidos entre varias máquinas virtuales mediante la tecnología \textit{SR-IOV} (\textit{Single Root I/O Virtualization}).
+
+En este esquema, un único dispositivo físico expone múltiples dispositivos virtuales independientes, permitiendo que varias máquinas virtuales accedan simultáneamente al mismo hardware con una sobrecarga mínima.
+
+\subsection{Intel VT-c}
+
+\textit{Intel VT-c} (\textit{Virtualization Technology for Connectivity}) reúne un conjunto de tecnologías destinadas a optimizar el rendimiento de las comunicaciones de red en entornos virtualizados.
+
+Su objetivo es reducir la participación del hipervisor en el procesamiento de paquetes, permitiendo que la interfaz de red distribuya el tráfico directamente entre las distintas máquinas virtuales.
+
+Las tecnologías más utilizadas son VMDq y SR-IOV.
+
+\subsubsection{VMDq}
+
+\textit{VMDq} (\textit{Virtual Machine Device Queues}) permite que una interfaz de red mantenga múltiples colas de recepción y transmisión.
+
+Cada cola puede asociarse a una máquina virtual distinta. Cuando llegan paquetes desde la red, la propia placa de red los clasifica utilizando criterios como la dirección MAC o la VLAN y los deposita directamente en la cola correspondiente.
+
+Esto reduce el trabajo del hipervisor y mejora el rendimiento cuando varias máquinas virtuales comparten la misma interfaz física.
+
