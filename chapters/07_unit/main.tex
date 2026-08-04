@@ -304,6 +304,82 @@ En un sistema operativo tradicional, los niveles de privilegio del procesador se
 \end{itemize}
 En los primeros sistemas de virtualización, el hipervisor ocupaba el nivel de mayor privilegio y el sistema operativo invitado debía ejecutarse con privilegios inferiores. Como consecuencia, el hipervisor debía interceptar continuamente las operaciones privilegiadas para emular el comportamiento esperado.
 
+\begin{figure}[!ht]
+  \centering
+  \begin{subfigure}[b]{0.3\textwidth}
+    \centering
+    \begin{tikzpicture}[
+      bloque/.style={
+        draw, 
+        rectangle, 
+        text width=2cm, 
+        align=center, 
+        minimum height=0.7cm
+      }, font=\footnotesize
+    ]
+      \node[bloque, fill=gray!10] (app) {Aplicaciones}; 
+      \node[bloque, below=0.1cm of app] (e1) {}; 
+      \node[bloque, below=0.1cm of e1] (e2) {}; 
+      \node[bloque, fill=orange!10, below=0.1cm of e2] (so) {SO}; 
+      \node[bloque, fill=gray!20, below=0.1cm of so] {Hardware}; 
+      
+      \node[left=0.1cm of app] {Ring 3};
+      \node[left=0.1cm of e1]  {Ring 2};
+      \node[left=0.1cm of e2]  {Ring 1};
+      \node[left=0.1cm of so]  {Ring 0};
+    \end{tikzpicture}
+    \caption{Normal.}
+  \end{subfigure}
+  \hspace{0.2cm}
+  \begin{subfigure}[b]{0.25\textwidth}
+    \centering
+    \begin{tikzpicture}[
+      bloque/.style={
+        draw, 
+        rectangle, 
+        text width=2cm, 
+        align=center, 
+        minimum height=0.7cm
+      }, font=\footnotesize
+    ]
+      \node[bloque, fill=gray!10] (app) {Aplicaciones}; 
+      \node[bloque, below=0.1cm of app] (e1) {}; 
+      \node[bloque, below=0.1cm of e1,fill=blue!8] (e2) {VM}; 
+      \node[bloque, fill=teal!15, below=0.1cm of e2] (so) {Hipervisor}; 
+      \node[bloque, fill=gray!20, below=0.1cm of so] {Hardware}; 
+    \end{tikzpicture}
+    \caption{VT sotfware.}
+  \end{subfigure}
+  \hspace{0.2cm}
+  \begin{subfigure}[b]{0.3\textwidth}
+    \centering
+    \begin{tikzpicture}[
+      bloque/.style={
+        draw, 
+        rectangle, 
+        text width=2cm, 
+        align=center, 
+        minimum height=0.7cm
+      }, font=\footnotesize
+    ]
+      \node[bloque, fill=gray!10] (app) {Aplicaciones}; 
+      \node[bloque, below=0.1cm of app] (e1) {}; 
+      \node[bloque, below=0.1cm of e1] (e2) {}; 
+      \node[bloque, fill=blue!8, below=0.1cm of e2] (so) {VM}; 
+      \node[bloque, fill=teal!15, below=0.1cm of so] (hv) {Hipervisor}; 
+      \node[bloque, fill=gray!20, below=0.1cm of hv] {Hardware}; 
+      
+      \node[right=0.1cm of app] {Ring 3};
+      \node[right=0.1cm of e1]  {Ring 2};
+      \node[right=0.1cm of e2]  {Ring 1};
+      \node[right=0.1cm of so]  {Ring 0};
+      \node[right=0.1cm of hv]  {Ring 0p};
+    \end{tikzpicture}
+    \caption{VT-x.}
+  \end{subfigure}
+  \caption{Anillos sin virtualización, con virtualización por software y usando VT-x.}
+\end{figure}
+
 VT-x incorpora un nuevo modo de ejecución para la virtualización, permitiendo distinguir entre:
 \begin{itemize}
   \item \textit{VMX Root Mode}: utilizado por el hipervisor.
