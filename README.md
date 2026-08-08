@@ -44,8 +44,8 @@ Because this repository uses Git LFS for binary vector assets, ensure Git LFS is
 git lfs install
 
 # Clone the repository
-git clone <repository-url>
-cd <repository-name>
+git clone https://github.com/EVAnci/sistemas_operativos.git
+cd sistemas_operativos
 
 # Ensure all binary files are pulled
 git lfs pull
